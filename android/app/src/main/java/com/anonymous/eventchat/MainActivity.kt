@@ -1,4 +1,4 @@
-package com.eventchat
+package com.anonymous.eventchat
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

@@ -1,4 +1,4 @@
-package com.eventchat
+package com.anonymous.eventchat
 
 import android.app.Application
 import com.facebook.react.PackageList
