@@ -23,6 +23,7 @@ const OnboardingScreen = () => {
       <View style={styles.backgroundContainer}>
         <Image
           source={{ uri: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800' }}
+          //source={require('../assets/violet.png')}
           style={styles.backgroundImage}
         />
         <View style={styles.overlay} />
@@ -31,7 +32,7 @@ const OnboardingScreen = () => {
       {/* Logo */}
       <View style={styles.logoContainer}>
         <Image
-          source={require('../assets/images/eat-and-drink-logo.png')}
+          source={require('../assets/eat.png')}
           style={styles.logo}
           resizeMode="contain"
         />
