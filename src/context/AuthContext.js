@@ -10,7 +10,7 @@ import {
   FacebookAuthProvider,
   PhoneAuthProvider
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 export const AuthContext = createContext();
 
@@ -21,37 +21,25 @@ export const AuthProvider = ({ children }) => {
   // Inscription avec email/mot de passe
   const signUp = async (email, password, name, phone) => {
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
       
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        name,
-        email,
-        phone,
-        verified: false,
-        createdAt: new Date().toISOString()
-      });
-
-      if (phone) {
-        // Pour le téléphone
-        const phoneProvider = new PhoneAuthProvider(auth);
-        const verificationId = await phoneProvider.verifyPhoneNumber(phone, window.recaptchaVerifier);
-        return {
-          user: userCredential.user,
-          verificationId,
-          phone,
-          method: 'phone'
-        };
-      } else {
-        // Pour l'email
-        await userCredential.user.sendEmailVerification();
-        return {
-          user: userCredential.user,
-          email: userCredential.user.email,
-          method: 'email'
-        };
+      if (userCredential.user) {
+        await db()
+          .collection('users')
+          .doc(userCredential.user.uid)
+          .set({
+            name,
+            email,
+            phone: phone || '',
+            createdAt: serverTimestamp(),
+          }, { merge: true });
+        
+        return userCredential.user;
       }
     } catch (error) {
-      console.error("Erreur d'inscription:", error);
+      if (error.code === 'auth/network-request-failed') {
+        throw new Error('Problème de connexion réseau');
+      }
       throw error;
     }
   };

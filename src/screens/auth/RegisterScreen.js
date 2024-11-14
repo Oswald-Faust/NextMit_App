@@ -40,11 +40,26 @@ const RegisterScreen = ({ navigation }) => {
     
     try {
       setLoading(true);
-      await signUp(email, password, name, phone);
+      setError('');
+      
+      // Ajout d'un timeout pour la gestion des erreurs de connexion
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Délai de connexion dépassé')), 15000)
+      );
+
+      await Promise.race([
+        signUp(email, password, name, phone),
+        timeoutPromise
+      ]);
+      
       navigation.replace('Home');
     } catch (error) {
       console.error("Erreur lors de l'inscription:", error);
-      setError(error.message);
+      setError(
+        error.code === 'auth/network-request-failed' 
+          ? 'Problème de connexion. Veuillez vérifier votre connexion internet.'
+          : error.message || "Une erreur s'est produite lors de l'inscription"
+      );
     } finally {
       setLoading(false);
     }

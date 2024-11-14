@@ -5,7 +5,8 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   TextInput,
-  Image
+  Image,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -100,9 +101,11 @@ const LoginScreen = ({ navigation }) => {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
         >
-          <Text style={styles.loginText}>
-            {loading ? 'Chargement...' : 'Connexion'}
-          </Text>
+          {loading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.loginText}>Connexion</Text>
+          )}
         </LinearGradient>
       </TouchableOpacity>
 

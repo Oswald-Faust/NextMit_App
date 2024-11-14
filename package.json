@@ -21,6 +21,7 @@
     "crypto-browserify": "^3.12.1",
     "EventChat": "file:",
     "expo": "^52.0.6",
+    "expo-av": "~15.0.1",
     "expo-font": "~13.0.1",
     "expo-linear-gradient": "~14.0.1",
     "expo-splash-screen": "^0.29.9",
