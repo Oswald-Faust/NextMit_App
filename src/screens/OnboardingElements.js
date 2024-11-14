@@ -45,13 +45,18 @@ const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 const OnboardingElements = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
 
   const handleNext = () => {
     if (currentIndex === slides.length - 1) {
       return;
     }
+    
+    const nextIndex = currentIndex + 1;
+    setCurrentIndex(nextIndex);
+    
     flatListRef.current?.scrollToIndex({
-      index: currentIndex + 1,
+      index: nextIndex,
       animated: true
     });
   };
@@ -132,10 +137,15 @@ const OnboardingElements = ({ navigation }) => {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: true }
+        )}
         onMomentumScrollEnd={(e) => {
           const index = Math.round(e.nativeEvent.contentOffset.x / width);
           setCurrentIndex(index);
         }}
+        scrollEventThrottle={16}
       />
     </SafeAreaView>
   );
