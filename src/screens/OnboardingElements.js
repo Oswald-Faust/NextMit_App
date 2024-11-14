@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
+import NextArrowButton from '../components/onboarding/NextArrowButton';
 
 const { width, height } = Dimensions.get('window');
 
@@ -95,11 +96,10 @@ const OnboardingElements = ({ navigation }) => {
             ))}
           </View>
 
-          <TouchableOpacity onPress={() => navigation.replace('Home')}>
-            <View style={styles.nextButton}>
-              <Text style={styles.arrow}>→</Text>
-            </View>
-          </TouchableOpacity>
+          <NextArrowButton 
+            onPress={() => navigation.replace('Home')}
+            isLastSlide={true}
+          />
         </View>
       );
     }
@@ -119,11 +119,10 @@ const OnboardingElements = ({ navigation }) => {
           ))}
         </View>
 
-        <TouchableOpacity onPress={handleNext}>
-          <View style={styles.nextButton}>
-            <Text style={styles.arrow}>→</Text>
-          </View>
-        </TouchableOpacity>
+        <NextArrowButton 
+          onPress={handleNext}
+          isLastSlide={currentIndex === slides.length - 1}
+        />
       </View>
     );
   };
@@ -216,19 +215,6 @@ const styles = StyleSheet.create({
   activeDot: {
     backgroundColor: 'white',
     width: 20,
-  },
-  nextButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  arrow: {
-    color: '#8A2BE2',
-    fontSize: 24,
-    fontWeight: 'bold',
   },
 });
 

@@ -1,13 +1,19 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FONTS, COLORS } from '../constants/theme';
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Événements</Text>
+        <TouchableOpacity 
+          onPress={() => navigation.navigate('Login')}
+          style={styles.loginButton}
+        >
+          <Text style={styles.loginText}>Connexion</Text>
+        </TouchableOpacity>
       </View>
       
       <ScrollView style={styles.content}>
@@ -38,11 +44,13 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
     height: 60,
     backgroundColor: COLORS.secondary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
   },
   headerTitle: {
     fontFamily: FONTS.bold,
@@ -65,6 +73,17 @@ const styles = StyleSheet.create({
   upcomingContainer: {
     flex: 1,
   },
+  loginButton: {
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary,
+  },
+  loginText: {
+    color: COLORS.white,
+    fontFamily: FONTS.medium,
+    fontSize: 14,
+  }
 });
 
 export default HomeScreen; 

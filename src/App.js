@@ -8,6 +8,8 @@ import InitialSplashScreen from './screens/SplashScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import OnboardingElements from './screens/OnboardingElements';
 import HomeScreen from './screens/HomeScreen';
+import LoginScreen from './screens/auth/LoginScreen';
+import RegisterScreen from './screens/auth/RegisterScreen';
 
 const Stack = createStackNavigator();
 
@@ -39,6 +41,7 @@ export default function App() {
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           <Stack.Screen name="OnboardingElements" component={OnboardingElements} />
           <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Login" component={LoginScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>
