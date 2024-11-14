@@ -16,7 +16,7 @@ const OnboardingScreen = ({ navigation }) => {
     'ClanPro-Bold': require('../assets/fonts/ClanPro-Bold.ttf'),
     'ClanPro-Medium': require('../assets/fonts/ClanPro-Medium.ttf'),
     'ClanPro-Book': require('../assets/fonts/ClanPro-Book.ttf'),
-  });
+  }); 
 
   React.useEffect(() => {
     Animated.parallel([
