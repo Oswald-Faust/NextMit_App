@@ -1,19 +1,40 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FONTS, COLORS } from '../constants/theme';
+import { AuthContext } from '../context/AuthContext';
 
 const HomeScreen = ({ navigation }) => {
+  const { user, signOut } = useContext(AuthContext);
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigation.replace('Login');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Événements</Text>
-        <TouchableOpacity 
-          onPress={() => navigation.navigate('Login')}
-          style={styles.loginButton}
-        >
-          <Text style={styles.loginText}>Connexion</Text>
-        </TouchableOpacity>
+        {user ? (
+          <TouchableOpacity 
+            onPress={handleLogout}
+            style={styles.loginButton}
+          >
+            <Text style={styles.loginText}>Déconnexion</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('Login')}
+            style={styles.loginButton}
+          >
+            <Text style={styles.loginText}>Connexion</Text>
+          </TouchableOpacity>
+        )}
       </View>
       
       <ScrollView style={styles.content}>

@@ -89,20 +89,28 @@ const LoginScreen = ({ navigation }) => {
         <Text style={styles.forgotPassword}>Mot de passe oublié?</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.loginButton}>
+      <TouchableOpacity 
+        style={styles.loginButton}
+        onPress={handleLogin}
+        disabled={loading}
+      >
         <LinearGradient
           colors={[COLORS.primary, '#9400D3']}
           style={styles.gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
         >
-          <Text style={styles.loginText}>Connexion</Text>
+          <Text style={styles.loginText}>
+            {loading ? 'Chargement...' : 'Connexion'}
+          </Text>
         </LinearGradient>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('Register')}>
         <Text style={styles.registerText}>S'inscrire</Text>
       </TouchableOpacity>
+
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </SafeAreaView>
   );
 };
@@ -216,6 +224,18 @@ const styles = StyleSheet.create({
     top: 50,
     left: 20,
     zIndex: 1,
+  },
+  errorText: {
+    color: '#ff4444',
+    marginTop: 10,
+    fontFamily: FONTS.regular,
+  },
+  gradient: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 25,
   },
 });
 

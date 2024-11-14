@@ -10,6 +10,7 @@ import OnboardingElements from './screens/OnboardingElements';
 import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/auth/LoginScreen';
 import RegisterScreen from './screens/auth/RegisterScreen';
+import VerificationScreen from './screens/auth/VerificationScreen';
 import { AuthProvider } from './context/AuthContext';
 
 const Stack = createStackNavigator();
@@ -45,6 +46,7 @@ export default function App() {
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="Verification" component={VerificationScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </View>

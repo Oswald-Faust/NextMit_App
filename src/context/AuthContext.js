@@ -7,7 +7,8 @@ import {
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
-  FacebookAuthProvider
+  FacebookAuthProvider,
+  PhoneAuthProvider
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
@@ -21,14 +22,36 @@ export const AuthProvider = ({ children }) => {
   const signUp = async (email, password, name, phone) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
       await setDoc(doc(db, 'users', userCredential.user.uid), {
         name,
         email,
         phone,
+        verified: false,
         createdAt: new Date().toISOString()
       });
-      return userCredential.user;
+
+      if (phone) {
+        // Pour le téléphone
+        const phoneProvider = new PhoneAuthProvider(auth);
+        const verificationId = await phoneProvider.verifyPhoneNumber(phone, window.recaptchaVerifier);
+        return {
+          user: userCredential.user,
+          verificationId,
+          phone,
+          method: 'phone'
+        };
+      } else {
+        // Pour l'email
+        await userCredential.user.sendEmailVerification();
+        return {
+          user: userCredential.user,
+          email: userCredential.user.email,
+          method: 'email'
+        };
+      }
     } catch (error) {
+      console.error("Erreur d'inscription:", error);
       throw error;
     }
   };
@@ -78,6 +101,15 @@ export const AuthProvider = ({ children }) => {
         });
       }
       return userCredential.user;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const signOut = async () => {
+    try {
+      await auth.signOut();
+      setUser(null);
     } catch (error) {
       throw error;
     }

@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   TextInput,
   Image,
-  ScrollView
+  ScrollView,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,6 +28,11 @@ const RegisterScreen = ({ navigation }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleRegister = async () => {
+    if (!name || !email || !password || !confirmPassword) {
+      setError('Veuillez remplir tous les champs obligatoires');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
       return;
@@ -37,6 +43,7 @@ const RegisterScreen = ({ navigation }) => {
       await signUp(email, password, name, phone);
       navigation.replace('Home');
     } catch (error) {
+      console.error("Erreur lors de l'inscription:", error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -152,16 +159,26 @@ const RegisterScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.registerButton}>
+        <TouchableOpacity 
+          style={styles.registerButton} 
+          onPress={handleRegister}
+          disabled={loading}
+        >
           <LinearGradient
             colors={[COLORS.primary, '#9400D3']}
             style={styles.gradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
           >
-            <Text style={styles.registerButtonText}>S'inscrire</Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.registerButtonText}>S'inscrire</Text>
+            )}
           </LinearGradient>
         </TouchableOpacity>
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
           <Text style={styles.loginText}>Déjà un compte? Se connecter</Text>
@@ -279,6 +296,18 @@ const styles = StyleSheet.create({
     top: 50,
     left: 20,
     zIndex: 1,
+  },
+  errorText: {
+    color: '#ff4444',
+    marginTop: 10,
+    fontFamily: FONTS.regular,
+  },
+  gradient: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 25,
   },
 });
 
