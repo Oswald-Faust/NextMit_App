@@ -48,13 +48,12 @@ const OnboardingElements = ({ navigation }) => {
 
   const handleNext = () => {
     if (currentIndex === slides.length - 1) {
-      navigation.replace('Home');
-    } else {
-      flatListRef.current?.scrollToIndex({
-        index: currentIndex + 1,
-        animated: true
-      });
+      return;
     }
+    flatListRef.current?.scrollToIndex({
+      index: currentIndex + 1,
+      animated: true
+    });
   };
 
   const renderItem = ({ item }) => (
@@ -70,6 +69,37 @@ const OnboardingElements = ({ navigation }) => {
         <Text style={styles.description}>{item.text}</Text>
       </View>
 
+      {renderBottomButtons()}
+    </View>
+  );
+
+  const renderBottomButtons = () => {
+    if (currentIndex === slides.length - 1) {
+      return (
+        <View style={styles.bottomContainer}>
+          <TouchableOpacity onPress={() => navigation.replace('Home')}>
+            <Text style={styles.skipText}>Passer</Text>
+          </TouchableOpacity>
+
+          <View style={styles.pagination}>
+            {slides.map((_, index) => (
+              <View
+                key={index}
+                style={[styles.dot, currentIndex === index && styles.activeDot]}
+              />
+            ))}
+          </View>
+
+          <TouchableOpacity onPress={() => navigation.replace('Home')}>
+            <View style={styles.nextButton}>
+              <Text style={styles.arrow}>→</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
       <View style={styles.bottomContainer}>
         <TouchableOpacity onPress={() => navigation.replace('Home')}>
           <Text style={styles.skipText}>Passer</Text>
@@ -90,8 +120,8 @@ const OnboardingElements = ({ navigation }) => {
           </View>
         </TouchableOpacity>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -130,27 +160,32 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     paddingHorizontal: 30,
-    justifyContent: 'center',
-    marginTop: height * 0.2,
+    justifyContent: 'flex-end',
+    paddingBottom: height * 0.25,
   },
   highlightText: {
     fontFamily: 'ClanPro-Bold',
     fontSize: 42,
     color: 'white',
     marginBottom: 20,
+    textAlign: 'left',
   },
   description: {
     fontFamily: 'ClanPro-Book',
     fontSize: 18,
     color: 'white',
     lineHeight: 24,
+    textAlign: 'left',
   },
   bottomContainer: {
+    position: 'absolute',
+    bottom: 50,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 30,
-    paddingBottom: 50,
   },
   skipText: {
     color: 'white',
