@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, Dimensions, Animated } from 'react-native';
+import { View, Text, Image, StyleSheet, Dimensions, Animated, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useFonts } from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
-import { TouchableOpacity } from 'react-native';
 import { COLORS, FONTS } from '../constants/theme';
 
 const { width, height } = Dimensions.get('window');
@@ -16,7 +16,7 @@ const OnboardingScreen = ({ navigation }) => {
     'ClanPro-Bold': require('../assets/fonts/ClanPro-Bold.ttf'),
     'ClanPro-Medium': require('../assets/fonts/ClanPro-Medium.ttf'),
     'ClanPro-Book': require('../assets/fonts/ClanPro-Book.ttf'),
-  }); 
+  });
 
   React.useEffect(() => {
     Animated.parallel([
@@ -43,10 +43,10 @@ const OnboardingScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Background Image */}
+      {/* Background Image avec overlay */}
       <View style={styles.backgroundContainer}>
         <Image
-          source={{ uri: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800' }}
+          source={require('../assets/violet.png')}
           style={styles.backgroundImage}
         />
         <View style={styles.overlay} />
@@ -61,26 +61,32 @@ const OnboardingScreen = ({ navigation }) => {
         />
       </View>
 
-      {/* Content avec animation */}
-      <Animated.View 
-        style={[
-          styles.contentContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          }
-        ]}
-      >
-        <Text style={styles.text}>
-          À l'origine il s'agissait d'une hypothèse de certains,{'\n'}
-          selon laquelle le pur plaisir{'\n'}
-          est atteint grâce à la{'\n'}
-          combinaison de <Text style={styles.boldText}>4 éléments</Text>
+      {/* Contenu */}
+      <View style={styles.contentContainer}>
+        <Text style={styles.title}>Hello!</Text>
+        <Text style={styles.description}>
+          Bienvenue dans l'univers festif d'Event Chat! Explore les festivals comme jamais auparavant.
         </Text>
-      </Animated.View>
+      </View>
 
-      <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-        <Ionicons name="arrow-forward-circle" size={50} color="white" />
+      {/* Nouveau bouton Get Start */}
+      <TouchableOpacity 
+        style={styles.getStartButton} 
+        onPress={handleNext}
+      >
+        <LinearGradient
+          colors={['#8A2BE2', '#9400D3']}
+          style={styles.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          <Text style={styles.buttonText}>Get Start</Text>
+          <View style={styles.arrowContainer}>
+            <View style={styles.arrowCircle}>
+              <Text style={styles.arrow}>→</Text>
+            </View>
+          </View>
+        </LinearGradient>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -96,42 +102,83 @@ const styles = StyleSheet.create({
   backgroundImage: {
     width: width,
     height: height,
-    opacity: 0.7,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundImage: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7))',
   },
   logoContainer: {
-    alignItems: 'center',
-    paddingTop: 40,
+    position: 'absolute',
+    top: 40,
+    left: 20,
   },
   logo: {
-    width: 180,
-    height: 60,
+    width: 150,
+    height: 40,
   },
   contentContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    paddingBottom: 100,
+    position: 'absolute',
+    bottom: 100,
+    left: 0,
+    right: 0,
     paddingHorizontal: 30,
   },
-  text: {
-    color: COLORS.white,
-    fontSize: 18,
-    textAlign: 'center',
-    lineHeight: 28,
-    fontFamily: FONTS.regular,
-  },
-  boldText: {
+  title: {
     fontFamily: FONTS.bold,
+    fontSize: 42,
+    color: COLORS.white,
+    textAlign: 'center',
+    marginBottom: 20,
   },
-  nextButton: {
+  description: {
+    fontFamily: FONTS.regular,
+    fontSize: 18,
+    color: COLORS.white,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  getStartButton: {
     position: 'absolute',
     bottom: 40,
     alignSelf: 'center',
-    padding: 10,
+    width: width - 60,
+    height: 56,
+    borderRadius: 28,
+    overflow: 'hidden',
   },
+  gradient: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 18,
+    fontFamily: FONTS.medium,
+  },
+  arrowContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  arrowCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  arrow: {
+    color: 'white',
+    fontSize: 20,
+  }
 });
 
 export default OnboardingScreen; 

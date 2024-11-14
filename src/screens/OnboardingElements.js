@@ -18,24 +18,24 @@ const { width, height } = Dimensions.get('window');
 const slides = [
   {
     id: '1',
-    text: 'Un grand repas ou une quantité énorme de nourriture ne peut se faire sans le',
-    highlight: 'Bouffe!',
-    color: '#FF4444',
-    image: require('../assets/bouffe_now.png')
+    text: 'Vis l\'événement en direct. Partage tes réactions, tes émotions et connecte-toi avec la communauté festive.',
+    highlight: 'En direct\nl\'événement',
+    color: '#8A2BE2',
+    image: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800'
   },
   {
     id: '2',
-    text: 'La boisson rafraîchit et fait partie intégrante de votre expérience',
-    highlight: 'Bois!',
-    color: '#1E90FF',
-    image: require('../assets/bouffe_now.png')
+    text: 'Découvre les événements autour de toi et rejoins la communauté festive la plus proche.',
+    highlight: 'Découvre\nprès de toi',
+    color: '#FF4444',
+    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800'
   },
   {
     id: '3',
-    text: 'De nouvelles découvertes gastronomiques à chaque coin',
-    highlight: 'Explore!',
-    color: '#FFA500',
-    image: require('../assets/bouffe_now.png')
+    text: 'Partage tes moments préférés et garde un souvenir de chaque instant festif.',
+    highlight: 'Partage\ntes moments',
+    color: '#1E90FF',
+    image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800'
   }
 ];
 
@@ -44,42 +44,54 @@ const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 const OnboardingElements = ({ navigation }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef(null);
 
-  const viewabilityConfig = useRef({
-    itemVisiblePercentThreshold: 50
-  }).current;
-
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    if (viewableItems[0]) {
-      setCurrentIndex(viewableItems[0].index);
-    }
-  }).current;
-
-  const handleMomentumScrollEnd = () => {
+  const handleNext = () => {
     if (currentIndex === slides.length - 1) {
       navigation.replace('Home');
+    } else {
+      flatListRef.current?.scrollToIndex({
+        index: currentIndex + 1,
+        animated: true
+      });
     }
   };
 
-  const renderItem = ({ item, index }) => {
-    return (
-      <View style={[styles.slide, { width: width }]}>
-        <Image
-          source={item.image}
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        />
-        <View style={[styles.overlay, { backgroundColor: `${item.color}CC` }]} />
-        
-        <View style={styles.textContainer}>
-          <Text style={styles.mainText}>{item.text}</Text>
-          <Text style={styles.highlightText}>{item.highlight}</Text>
-        </View>
+  const renderItem = ({ item }) => (
+    <View style={[styles.slide, { width }]}>
+      <Image
+        source={{ uri: item.image }}
+        style={styles.backgroundImage}
+      />
+      <View style={[styles.overlay, { backgroundColor: `${item.color}99` }]} />
+      
+      <View style={styles.contentContainer}>
+        <Text style={styles.highlightText}>{item.highlight}</Text>
+        <Text style={styles.description}>{item.text}</Text>
       </View>
-    );
-  };
+
+      <View style={styles.bottomContainer}>
+        <TouchableOpacity onPress={() => navigation.replace('Home')}>
+          <Text style={styles.skipText}>Passer</Text>
+        </TouchableOpacity>
+
+        <View style={styles.pagination}>
+          {slides.map((_, index) => (
+            <View
+              key={index}
+              style={[styles.dot, currentIndex === index && styles.activeDot]}
+            />
+          ))}
+        </View>
+
+        <TouchableOpacity onPress={handleNext}>
+          <View style={styles.nextButton}>
+            <Text style={styles.arrow}>→</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -90,50 +102,11 @@ const OnboardingElements = ({ navigation }) => {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: true }
-        )}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        onMomentumScrollEnd={handleMomentumScrollEnd}
+        onMomentumScrollEnd={(e) => {
+          const index = Math.round(e.nativeEvent.contentOffset.x / width);
+          setCurrentIndex(index);
+        }}
       />
-  
-      {/* Indicateurs de pagination */}
-      <View style={styles.paginationContainer}>
-        {slides.map((_, index) => {
-          const inputRange = [
-            (index - 1) * width,
-            index * width,
-            (index + 1) * width
-          ];
-
-          const opacity = scrollX.interpolate({
-            inputRange,
-            outputRange: [0.3, 1, 0.3],
-            extrapolate: 'clamp',
-          });
-
-          const scale = scrollX.interpolate({
-            inputRange,
-            outputRange: [1, 1.5, 1],
-            extrapolate: 'clamp',
-          });
-
-          return (
-            <Animated.View
-              key={index}
-              style={[
-                styles.paginationDot,
-                {
-                  opacity,
-                  transform: [{ scale }]
-                }
-              ]}
-            />
-          );
-        })}
-      </View>
     </SafeAreaView>
   );
 };
@@ -141,70 +114,76 @@ const OnboardingElements = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  backButton: {
-    position: 'absolute',
-    top: 50,
-    left: 20,
-    zIndex: 1,
-    padding: 10,
+    backgroundColor: '#000',
   },
   slide: {
     flex: 1,
-    width: width,
-    height: height,
   },
   backgroundImage: {
     ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
+    width,
+    height,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 0, 0, 0.85)',
   },
-  paginationContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    bottom: '30%',
-    width: '100%',
-    paddingVertical: 20,
-  },
-  paginationDotContainer: {
-    padding: 10,
-  },
-  paginationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'white',
-    marginHorizontal: 4,
-  },
-  activeDot: {
-    width: 20,
-    backgroundColor: 'white',
-  },
-  textContainer: {
-    position: 'absolute',
-    bottom: '20%',
-    width: '100%',
+  contentContainer: {
+    flex: 1,
     paddingHorizontal: 30,
-  },
-  mainText: {
-    fontFamily: 'ClanPro-Book',
-    fontSize: 24,
-    color: 'white',
-    textAlign: 'center',
-    lineHeight: 32,
+    justifyContent: 'center',
+    marginTop: height * 0.2,
   },
   highlightText: {
     fontFamily: 'ClanPro-Bold',
-    fontSize: 48,
+    fontSize: 42,
     color: 'white',
-    textAlign: 'center',
-    marginTop: 20,
+    marginBottom: 20,
+  },
+  description: {
+    fontFamily: 'ClanPro-Book',
+    fontSize: 18,
+    color: 'white',
+    lineHeight: 24,
+  },
+  bottomContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 30,
+    paddingBottom: 50,
+  },
+  skipText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'ClanPro-Book',
+  },
+  pagination: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: 'white',
+    width: 20,
+  },
+  nextButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  arrow: {
+    color: '#8A2BE2',
+    fontSize: 24,
+    fontWeight: 'bold',
   },
 });
 
