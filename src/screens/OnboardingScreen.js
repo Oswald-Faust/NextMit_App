@@ -1,17 +1,41 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, Dimensions, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-import { FONTS, COLORS } from '../constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native';
+import { COLORS, FONTS } from '../constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
-const OnboardingScreen = () => {
+const OnboardingScreen = ({ navigation }) => {
+  const fadeAnim = new Animated.Value(0);
+  const slideAnim = new Animated.Value(50);
+
   const [fontsLoaded] = useFonts({
     'ClanPro-Bold': require('../assets/fonts/ClanPro-Bold.ttf'),
     'ClanPro-Medium': require('../assets/fonts/ClanPro-Medium.ttf'),
     'ClanPro-Book': require('../assets/fonts/ClanPro-Book.ttf'),
   });
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const handleNext = () => {
+    navigation.replace('OnboardingElements');
+  };
 
   if (!fontsLoaded) {
     return null;
@@ -23,7 +47,6 @@ const OnboardingScreen = () => {
       <View style={styles.backgroundContainer}>
         <Image
           source={{ uri: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800' }}
-          //source={require('../assets/violet.png')}
           style={styles.backgroundImage}
         />
         <View style={styles.overlay} />
@@ -38,15 +61,27 @@ const OnboardingScreen = () => {
         />
       </View>
 
-      {/* Content */}
-      <View style={styles.contentContainer}>
+      {/* Content avec animation */}
+      <Animated.View 
+        style={[
+          styles.contentContainer,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          }
+        ]}
+      >
         <Text style={styles.text}>
           À l'origine il s'agissait d'une hypothèse de certains,{'\n'}
           selon laquelle le pur plaisir{'\n'}
           est atteint grâce à la{'\n'}
           combinaison de <Text style={styles.boldText}>4 éléments</Text>
         </Text>
-      </View>
+      </Animated.View>
+
+      <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+        <Ionicons name="arrow-forward-circle" size={50} color="white" />
+      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -54,7 +89,6 @@ const OnboardingScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.primary,
   },
   backgroundContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -66,7 +100,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: `${COLORS.primary}99`,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   logoContainer: {
     alignItems: 'center',
@@ -91,6 +125,12 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontFamily: FONTS.bold,
+  },
+  nextButton: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    padding: 10,
   },
 });
 

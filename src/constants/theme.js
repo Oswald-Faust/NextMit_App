@@ -5,6 +5,8 @@ export const FONTS = {
 };
 
 export const COLORS = {
-  primary: '#5900B3',
+  primary: '#8A2BE2',
   white: '#FFFFFF',
+  black: '#000000',
+  overlay: 'rgba(138, 43, 226, 0.6)',
 }; 

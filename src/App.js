@@ -6,6 +6,8 @@ import * as ExpoSplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import InitialSplashScreen from './screens/SplashScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
+import OnboardingElements from './screens/OnboardingElements';
+import HomeScreen from './screens/HomeScreen';
 
 const Stack = createStackNavigator();
 
@@ -35,6 +37,8 @@ export default function App() {
         >
           <Stack.Screen name="Splash" component={InitialSplashScreen} />
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+          <Stack.Screen name="OnboardingElements" component={OnboardingElements} />
+          <Stack.Screen name="Home" component={HomeScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </View>
