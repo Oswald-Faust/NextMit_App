@@ -32,17 +32,17 @@ const RegisterScreen = ({ navigation }) => {
         
         <Text style={styles.title}>Inscription</Text>
 
-        <View style={styles.socialButtons}>
-          <TouchableOpacity style={styles.socialButton}>
-            <Image source={require('../../assets/_Facebook.png')} style={styles.socialIcon} />
-            <Text style={styles.socialText}>Facebook</Text>
-          </TouchableOpacity>
+       <View style={styles.socialButtons}>
+        <TouchableOpacity style={styles.socialButton}>
+          <Image source={require('../../assets/_Facebook.png')} style={styles.socialIcon} />
+          <Text style={styles.socialText}>Facebook</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.socialButton}>
-            <Image source={require('../../assets/_Google.png')} style={styles.socialIcon} />
-            <Text style={styles.socialText}>Google</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.socialButton}>
+          <Image source={require('../../assets/_Google.png')} style={styles.socialIcon} />
+          <Text style={styles.socialText}>Google</Text>
+        </TouchableOpacity>
+      </View>
 
         <Text style={styles.orText}>Or</Text>
 
@@ -157,24 +157,42 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#333',
   },
+  socialIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+  },
+  socialText: {
+    color: '#fff',
+    fontFamily: FONTS.medium,
+  },
+  orText: {
+    color: '#666',
+    marginVertical: 20,
+    fontFamily: FONTS.medium,
+  },
   input: {
     width: '100%',
     height: 50,
-    backgroundColor: '#111',
+    backgroundColor: '#1A1A1A',
     borderRadius: 25,
     paddingHorizontal: 20,
     color: '#fff',
     marginBottom: 15,
     fontFamily: FONTS.regular,
+    borderWidth: 1,
+    borderColor: '#333',
   },
   passwordContainer: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111',
+    backgroundColor: '#1A1A1A',
     borderRadius: 25,
     paddingHorizontal: 20,
     marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#333',
   },
   passwordInput: {
     flex: 1,
