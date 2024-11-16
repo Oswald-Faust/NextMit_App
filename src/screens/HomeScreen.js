@@ -13,7 +13,7 @@ const BackgroundVideo = () => {
     <>
       <Video
         source={{
-          uri: 'https://player.vimeo.com/external/434045526.sd.mp4?s=c27eecc69a27dbc4ff2b87d38afc35f1a9e7c02d&profile_id=165&oauth2_token_id=57447761'
+          uri: 'https://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4'
         }}
         style={StyleSheet.absoluteFill}
         shouldPlay
@@ -110,14 +110,14 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Navigation du bas */}
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem}>
+          <TouchableOpacity style={styles.navItem} >
             <Ionicons name="home" size={24} color={COLORS.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
-            <Ionicons name="notifications-outline" size={24} color="#666" />
+            <Ionicons name="pricetag-outline" size={24} color="#666" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
-            <Ionicons name="pricetag-outline" size={24} color="#666" />
+            <Ionicons name="notifications-outline" size={24} color="#666" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
             <Ionicons name="chatbubble-outline" size={24} color="#666" />
