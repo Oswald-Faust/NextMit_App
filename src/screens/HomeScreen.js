@@ -34,19 +34,20 @@ const HomeScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
   const [showEvents, setShowEvents] = useState(false);
 
+  const handleProtectedNavigation = (route) => {
+    if (!user) {
+      navigation.navigate('Login');
+      return;
+    }
+    navigation.navigate(route);
+  };
+
   // Données temporaires pour les événements
   const hotEvents = [
     { id: '1', title: 'We Love Eya', viewers: 2302 },
     { id: '2', title: 'Cotonou Barbecue', viewers: 1205 },
     { id: '3', title: 'Festichill', viewers: 3506 },
   ];
-
-  const handleMessagePress = () => {
-    if (!user) {
-      navigation.navigate('Login');
-      return;
-    }
-  };
 
   const renderEventItem = ({ item }) => (
     <TouchableOpacity style={styles.eventItem}>
@@ -96,13 +97,13 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.inputContainer}>
           <TouchableOpacity 
             style={styles.messageInput}
-            onPress={handleMessagePress}
+            onPress={handleProtectedNavigation}
           >
             <Text style={styles.placeholderText}>Écrire un message...</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.sendButton}
-            onPress={handleMessagePress}
+            onPress={handleProtectedNavigation}
           >
             <Ionicons name="send" size={24} color={COLORS.primary} />
           </TouchableOpacity>
@@ -110,19 +111,31 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Navigation du bas */}
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} >
+          <TouchableOpacity style={styles.navItem}>
             <Ionicons name="home" size={24} color={COLORS.primary} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
+          <TouchableOpacity 
+            style={styles.navItem}
+            onPress={() => handleProtectedNavigation('Events')}
+          >
             <Ionicons name="pricetag-outline" size={24} color="#666" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
+          <TouchableOpacity 
+            style={styles.navItem}
+            onPress={() => handleProtectedNavigation('Notifications')}
+          >
             <Ionicons name="notifications-outline" size={24} color="#666" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
+          <TouchableOpacity 
+            style={styles.navItem}
+            onPress={() => handleProtectedNavigation('Chat')}
+          >
             <Ionicons name="chatbubble-outline" size={24} color="#666" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
+          <TouchableOpacity 
+            style={styles.navItem}
+            onPress={() => handleProtectedNavigation('Profile')}
+          >
             <Ionicons name="person-outline" size={24} color="#666" />
           </TouchableOpacity>
         </View>
