@@ -1,18 +1,27 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from '../context/AuthContext';
 import { COLORS } from '../constants';
 
 const ProfileScreen = ({ navigation }) => {
-  const { user, userData, signOut } = useContext(AuthContext);
+  const { user, userData, updateProfile } = useContext(AuthContext);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: userData?.firstName || '',
+    lastName: userData?.lastName || '',
+    phoneNumber: userData?.phoneNumber || '',
+    bio: userData?.bio || '',
+    notificationsEnabled: userData?.notificationsEnabled ?? true,
+  });
 
-  const handleSignOut = async () => {
+  const handleSave = async () => {
     try {
-      await signOut();
-      navigation.replace('Login');
+      await updateProfile(formData);
+      setIsEditing(false);
     } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
+      console.error('Erreur sauvegarde:', error);
+      // Gérer l'erreur (afficher un message, etc.)
     }
   };
 

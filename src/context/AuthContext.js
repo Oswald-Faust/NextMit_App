@@ -12,6 +12,7 @@ import {
   sendEmailVerification
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { userService } from '../services/userService';
 
 export const AuthContext = createContext();
 
@@ -20,17 +21,23 @@ export const AuthProvider = ({ children }) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Charger les données utilisateur
+  const loadUserData = async (userId) => {
+    try {
+      const data = await userService.getUserData(userId);
+      setUserData(data);
+    } catch (error) {
+      console.error('Erreur chargement données:', error);
+    }
+  };
+
+  // Observer les changements d'authentification
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
       if (user) {
-        // Récupérer les données utilisateur de Firestore
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data());
-        }
-        setUser(user);
+        await loadUserData(user.uid);
       } else {
-        setUser(null);
         setUserData(null);
       }
       setLoading(false);
@@ -39,29 +46,31 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  // Inscription avec email/mot de passe
-  const signUp = async (email, password, name, phone) => {
+  // Inscription avec données complètes
+  const signUp = async (email, password, userData) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      if (userCredential.user) {
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-          name,
-          email,
-          phone: phone || '',
-          createdAt: serverTimestamp(),
-        });
-        
-        // Envoi de l'email de vérification
-        await sendEmailVerification(userCredential.user);
-        
-        return userCredential.user;
-      }
+      await userService.createUser({
+        ...userData,
+        email,
+        uid: userCredential.user.uid,
+      });
+      
+      return userCredential.user;
     } catch (error) {
-      console.error('Erreur signup:', error);
-      if (error.code === 'auth/network-request-failed') {
-        throw new Error('Problème de connexion réseau');
-      }
+      console.error('Erreur inscription:', error);
+      throw error;
+    }
+  };
+
+  // Mise à jour du profil
+  const updateProfile = async (updates) => {
+    try {
+      await userService.updateUserProfile(updates);
+      await loadUserData(user.uid);
+    } catch (error) {
+      console.error('Erreur mise à jour profil:', error);
       throw error;
     }
   };
@@ -144,6 +153,8 @@ export const AuthProvider = ({ children }) => {
       signInWithGoogle,
       signInWithFacebook,
       resetPassword,
+      updateProfile,
+      loadUserData,
     }}>
       {!loading && children}
     </AuthContext.Provider>
