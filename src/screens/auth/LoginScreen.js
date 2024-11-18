@@ -26,9 +26,14 @@ const LoginScreen = ({ navigation }) => {
     try {
       setLoading(true);
       await signIn(email, password);
-      navigation.replace('Home');
     } catch (error) {
-      setError(error.message);
+      setError(
+        error.code === 'auth/user-not-found' 
+          ? 'Aucun compte trouvé avec cet email'
+          : error.code === 'auth/wrong-password'
+          ? 'Mot de passe incorrect'
+          : 'Une erreur est survenue'
+      );
     } finally {
       setLoading(false);
     }
@@ -47,7 +52,7 @@ const LoginScreen = ({ navigation }) => {
         style={styles.logo}
         resizeMode="contain"
       />
-      
+
       <Text style={styles.title}>Connexion</Text>
 
       <View style={styles.socialButtons}>
