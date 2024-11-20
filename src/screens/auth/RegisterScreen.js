@@ -16,74 +16,70 @@ import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from '../../context/AuthContext';
 
 const RegisterScreen = ({ navigation }) => {
-  const { signUp, signInWithGoogle, signInWithFacebook } = useContext(AuthContext);
+  const { signUp } = useContext(AuthContext);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [toast, setToast] = useState({
+    visible: false,
+    message: '',
+    type: 'error'
+  });
+
+  const showToast = (message, type = 'error') => {
+    setToast({
+      visible: true,
+      message,
+      type
+    });
+  };
 
   const handleRegister = async () => {
-    if (!name || !email || !password || !confirmPassword) {
-      setError('Veuillez remplir tous les champs obligatoires');
+    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+      showToast('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
-    if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+    if (!formData.email.includes('@')) {
+      showToast('Format d\'email invalide');
       return;
     }
-    
-    try {
-      setLoading(true);
-      setError('');
-      
-      // Ajout d'un timeout pour la gestion des erreurs de connexion
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Délai de connexion dépassé')), 15000)
-      );
 
-      await Promise.race([
-        signUp(email, password, name, phone),
-        timeoutPromise
-      ]);
-      
-      navigation.replace('Home');
-    } catch (error) {
-      console.error("Erreur lors de l'inscription:", error);
-      setError(
-        error.code === 'auth/network-request-failed' 
-          ? 'Problème de connexion. Veuillez vérifier votre connexion internet.'
-          : error.message || "Une erreur s'est produite lors de l'inscription"
-      );
-    } finally {
-      setLoading(false);
+    if (formData.password.length < 6) {
+      showToast('Le mot de passe doit contenir au moins 6 caractères');
+      return;
     }
-  };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-      await signInWithGoogle();
-      navigation.replace('Home');
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
+    if (formData.password !== formData.confirmPassword) {
+      showToast('Les mots de passe ne correspondent pas');
+      return;
     }
-  };
 
-  const handleFacebookSignIn = async () => {
     try {
       setLoading(true);
-      await signInWithFacebook();
-      navigation.replace('Home');
+      await signUp(formData.email, formData.password, formData.name, formData.phone);
+      showToast('Inscription réussie !', 'success');
+      setTimeout(() => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+      }, 1000);
     } catch (error) {
-      setError(error.message);
+      const errorMessage = 
+        error.code === 'auth/email-already-in-use'
+          ? 'Cet email est déjà utilisé'
+          : error.code === 'auth/invalid-email'
+          ? 'Format d\'email invalide'
+          : 'Une erreur est survenue lors de l\'inscription';
+      
+      showToast(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -124,16 +120,16 @@ const RegisterScreen = ({ navigation }) => {
           style={styles.input}
           placeholder="Nom complet"
           placeholderTextColor="#666"
-          value={name}
-          onChangeText={setName}
+          value={formData.name}
+          onChangeText={(text) => setFormData({ ...formData, name: text })}
         />
 
         <TextInput
           style={styles.input}
           placeholder="Email"
           placeholderTextColor="#666"
-          value={email}
-          onChangeText={setEmail}
+          value={formData.email}
+          onChangeText={(text) => setFormData({ ...formData, email: text })}
           keyboardType="email-address"
         />
 
@@ -141,8 +137,8 @@ const RegisterScreen = ({ navigation }) => {
           style={styles.input}
           placeholder="Téléphone"
           placeholderTextColor="#666"
-          value={phone}
-          onChangeText={setPhone}
+          value={formData.phone}
+          onChangeText={(text) => setFormData({ ...formData, phone: text })}
           keyboardType="phone-pad"
         />
 
@@ -151,12 +147,12 @@ const RegisterScreen = ({ navigation }) => {
             style={styles.passwordInput}
             placeholder="Mot de passe"
             placeholderTextColor="#666"
-            secureTextEntry={!showPassword}
-            value={password}
-            onChangeText={setPassword}
+            secureTextEntry={!formData.showPassword}
+            value={formData.password}
+            onChangeText={(text) => setFormData({ ...formData, password: text })}
           />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-            <Text style={styles.showHideText}>{showPassword ? 'Cacher' : 'Voir'}</Text>
+          <TouchableOpacity onPress={() => setFormData({ ...formData, showPassword: !formData.showPassword })}>
+            <Text style={styles.showHideText}>{formData.showPassword ? 'Cacher' : 'Voir'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -165,12 +161,12 @@ const RegisterScreen = ({ navigation }) => {
             style={styles.passwordInput}
             placeholder="Confirmer le mot de passe"
             placeholderTextColor="#666"
-            secureTextEntry={!showConfirmPassword}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
+            secureTextEntry={!formData.showConfirmPassword}
+            value={formData.confirmPassword}
+            onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
           />
-          <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-            <Text style={styles.showHideText}>{showConfirmPassword ? 'Cacher' : 'Voir'}</Text>
+          <TouchableOpacity onPress={() => setFormData({ ...formData, showConfirmPassword: !formData.showConfirmPassword })}>
+            <Text style={styles.showHideText}>{formData.showConfirmPassword ? 'Cacher' : 'Voir'}</Text>
           </TouchableOpacity>
         </View>
 
@@ -192,8 +188,6 @@ const RegisterScreen = ({ navigation }) => {
             )}
           </LinearGradient>
         </TouchableOpacity>
-
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <TouchableOpacity onPress={() => navigation.navigate('Login')}>
           <Text style={styles.loginText}>Déjà un compte? Se connecter</Text>

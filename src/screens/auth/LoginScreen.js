@@ -13,27 +13,60 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from '../../context/AuthContext';
+import CustomToast from '../../components/CustomToast';
 
 const LoginScreen = ({ navigation }) => {
   const { signIn, signInWithGoogle, signInWithFacebook } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [toast, setToast] = useState({
+    visible: false,
+    message: '',
+    type: 'error'
+  });
   const [loading, setLoading] = useState(false);
 
+  const showToast = (message, type = 'error') => {
+    setToast({
+      visible: true,
+      message,
+      type
+    });
+  };
+
   const handleLogin = async () => {
+    if (!email || !password) {
+      showToast('Veuillez remplir tous les champs');
+      return;
+    }
+
+    if (!email.includes('@')) {
+      showToast('Veuillez entrer un email valide');
+      return;
+    }
+
     try {
       setLoading(true);
       await signIn(email, password);
+      showToast('Connexion réussie !', 'success');
+      setTimeout(() => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Home' }],
+        });
+      }, 1000);
     } catch (error) {
-      setError(
+      const errorMessage = 
         error.code === 'auth/user-not-found' 
           ? 'Aucun compte trouvé avec cet email'
           : error.code === 'auth/wrong-password'
           ? 'Mot de passe incorrect'
-          : 'Une erreur est survenue'
-      );
+          : error.code === 'auth/invalid-email'
+          ? 'Veuillez entrer un email valide'
+          : 'Une erreur est survenue';
+      
+      showToast(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -41,7 +74,13 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity 
+      <CustomToast 
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={() => setToast(prev => ({ ...prev, visible: false }))}
+      />
+      <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
@@ -70,7 +109,10 @@ const LoginScreen = ({ navigation }) => {
       <Text style={styles.orText}>Or</Text>
 
       <TextInput
-        style={styles.input}
+        style={[
+          styles.input,
+          toast.visible && toast.message.includes('email') && styles.inputError
+        ]}
         placeholder="Email"
         placeholderTextColor="#666"
         value={email}
@@ -79,7 +121,10 @@ const LoginScreen = ({ navigation }) => {
 
       <View style={styles.passwordContainer}>
         <TextInput
-          style={styles.passwordInput}
+          style={[
+            styles.passwordInput,
+            toast.visible && toast.message.includes('mot de passe') && styles.inputError
+          ]}
           placeholder="Mot de passe"
           placeholderTextColor="#666"
           secureTextEntry={!showPassword}
@@ -117,8 +162,6 @@ const LoginScreen = ({ navigation }) => {
       <TouchableOpacity onPress={() => navigation.navigate('Register')}>
         <Text style={styles.registerText}>S'inscrire</Text>
       </TouchableOpacity>
-
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </SafeAreaView>
   );
 };
@@ -244,6 +287,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 25,
+  },
+  inputError: {
+    borderColor: '#FF453A',
+    backgroundColor: 'rgba(255, 69, 58, 0.1)',
   },
 });
 
