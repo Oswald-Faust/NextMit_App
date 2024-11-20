@@ -1,18 +1,13 @@
-import React, { createContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect } from 'react';
 import { auth, db } from '../config/firebase';
 import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword,
-  signOut,
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
   onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithPopup,
-  FacebookAuthProvider,
-  PhoneAuthProvider,
-  sendEmailVerification
+  sendEmailVerification 
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { userService } from '../services/userService';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export const AuthContext = createContext();
 
@@ -21,23 +16,21 @@ export const AuthProvider = ({ children }) => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Charger les données utilisateur
-  const loadUserData = async (userId) => {
-    try {
-      const data = await userService.getUserData(userId);
-      setUserData(data);
-    } catch (error) {
-      console.error('Erreur chargement données:', error);
-    }
-  };
-
-  // Observer les changements d'authentification
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
       if (user) {
-        await loadUserData(user.uid);
+        setUser(user);
+        // Charger les données utilisateur depuis Firestore
+        try {
+          const userDoc = await getDoc(doc(db, 'users', user.uid));
+          if (userDoc.exists()) {
+            setUserData(userDoc.data());
+          }
+        } catch (error) {
+          console.error('Erreur chargement données utilisateur:', error);
+        }
       } else {
+        setUser(null);
         setUserData(null);
       }
       setLoading(false);
@@ -46,99 +39,69 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  // Inscription avec données complètes
-  const signUp = async (email, password, userData) => {
+  const signUp = async (email, password, name, phone) => {
     try {
+      // Créer l'utilisateur dans Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      await userService.createUser({
-        ...userData,
+      // Créer le profil utilisateur dans Firestore
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        name,
         email,
-        uid: userCredential.user.uid,
+        phone: phone || '',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
+
+      // Envoyer l'email de vérification
+      await sendEmailVerification(userCredential.user);
       
       return userCredential.user;
     } catch (error) {
       console.error('Erreur inscription:', error);
-      throw error;
+      if (error.code === 'auth/email-already-in-use') {
+        throw new Error('Cet email est déjà utilisé');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Email invalide');
+      } else if (error.code === 'auth/weak-password') {
+        throw new Error('Le mot de passe doit contenir au moins 6 caractères');
+      }
+      throw new Error('Erreur lors de l\'inscription');
     }
   };
 
-  // Mise à jour du profil
-  const updateProfile = async (updates) => {
-    try {
-      await userService.updateUserProfile(updates);
-      await loadUserData(user.uid);
-    } catch (error) {
-      console.error('Erreur mise à jour profil:', error);
-      throw error;
-    }
-  };
-
-  // Connexion avec email/mot de passe
   const signIn = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      return userCredential.user;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  // Connexion avec Google
-  const signInWithGoogle = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
-      const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
       
-      if (!userDoc.exists()) {
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-          name: userCredential.user.displayName,
-          email: userCredential.user.email,
-          createdAt: new Date().toISOString()
-        });
-      }
-      return userCredential.user;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  // Connexion avec Facebook
-  const signInWithFacebook = async () => {
-    try {
-      const provider = new FacebookAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
+      // Charger les données utilisateur
       const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-      
-      if (!userDoc.exists()) {
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-          name: userCredential.user.displayName,
-          email: userCredential.user.email,
-          createdAt: new Date().toISOString()
-        });
+      if (userDoc.exists()) {
+        setUserData(userDoc.data());
       }
+      
       return userCredential.user;
     } catch (error) {
-      throw error;
+      console.error('Erreur connexion:', error);
+      if (error.code === 'auth/user-not-found') {
+        throw new Error('Aucun compte trouvé avec cet email');
+      } else if (error.code === 'auth/wrong-password') {
+        throw new Error('Mot de passe incorrect');
+      } else if (error.code === 'auth/invalid-email') {
+        throw new Error('Email invalide');
+      }
+      throw new Error('Erreur lors de la connexion');
     }
   };
 
   const signOut = async () => {
     try {
-      await auth.signOut();
+      await firebaseSignOut(auth);
+      setUser(null);
+      setUserData(null);
     } catch (error) {
-      console.error('Erreur lors de la déconnexion:', error);
-      throw error;
-    }
-  };
-
-  const resetPassword = async (email) => {
-    try {
-      await auth().sendPasswordResetEmail(email);
-    } catch (error) {
-      throw error;
+      console.error('Erreur déconnexion:', error);
+      throw new Error('Erreur lors de la déconnexion');
     }
   };
 
@@ -147,16 +110,13 @@ export const AuthProvider = ({ children }) => {
       user,
       userData,
       loading,
-      signUp,
       signIn,
+      signUp,
       signOut,
-      signInWithGoogle,
-      signInWithFacebook,
-      resetPassword,
-      updateProfile,
-      loadUserData,
     }}>
       {!loading && children}
     </AuthContext.Provider>
   );
-}; 
+};
+
+export default AuthProvider;

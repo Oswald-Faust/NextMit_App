@@ -5,6 +5,7 @@ import { FONTS, COLORS } from '../constants/theme';
 import { AuthContext } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { Video } from 'expo-av';
+import { useProtectedNavigation } from '../hooks/useProtectedNavigation';
 
 const BackgroundVideo = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -33,13 +34,10 @@ const BackgroundVideo = () => {
 const HomeScreen = ({ navigation }) => {
   const { user } = useContext(AuthContext);
   const [showEvents, setShowEvents] = useState(false);
+  const { navigateWithAuth } = useProtectedNavigation();
 
-  const handleProtectedNavigation = (route) => {
-    if (!user) {
-      navigation.navigate('Login');
-      return;
-    }
-    navigation.navigate(route);
+  const handleNavigation = (routeName) => {
+    navigateWithAuth(routeName);
   };
 
   // Données temporaires pour les événements
@@ -97,13 +95,13 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.inputContainer}>
           <TouchableOpacity 
             style={styles.messageInput}
-            onPress={handleProtectedNavigation}
+            onPress={handleNavigation}
           >
             <Text style={styles.placeholderText}>Écrire un message...</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.sendButton}
-            onPress={handleProtectedNavigation}
+            onPress={handleNavigation}
           >
             <Ionicons name="send" size={24} color={COLORS.primary} />
           </TouchableOpacity>
@@ -116,25 +114,25 @@ const HomeScreen = ({ navigation }) => {
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.navItem}
-            onPress={() => handleProtectedNavigation('Events')}
+            onPress={() => handleNavigation('Events')}
           >
             <Ionicons name="pricetag-outline" size={24} color="#666" />
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.navItem}
-            onPress={() => handleProtectedNavigation('Notifications')}
+            onPress={() => handleNavigation('Notifications')}
           >
             <Ionicons name="notifications-outline" size={24} color="#666" />
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.navItem}
-            onPress={() => handleProtectedNavigation('Chat')}
+            onPress={() => handleNavigation('Chat')}
           >
             <Ionicons name="chatbubble-outline" size={24} color="#666" />
           </TouchableOpacity>
           <TouchableOpacity 
             style={styles.navItem}
-            onPress={() => handleProtectedNavigation('Profile')}
+            onPress={() => handleNavigation('Profile')}
           >
             <Ionicons name="person-outline" size={24} color="#666" />
           </TouchableOpacity>
