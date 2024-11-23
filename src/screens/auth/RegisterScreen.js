@@ -14,6 +14,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from '../../context/AuthContext';
+import PhoneInput from '../../components/PhoneInput';
+import CustomToast from '../../components/CustomToast';
 
 const RegisterScreen = ({ navigation }) => {
   const { signUp } = useContext(AuthContext);
@@ -133,13 +135,10 @@ const RegisterScreen = ({ navigation }) => {
           keyboardType="email-address"
         />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Téléphone"
-          placeholderTextColor="#666"
+        <PhoneInput
           value={formData.phone}
           onChangeText={(text) => setFormData({ ...formData, phone: text })}
-          keyboardType="phone-pad"
+          error={toast.visible && toast.message.includes('téléphone')}
         />
 
         <View style={styles.passwordContainer}>
