@@ -1,50 +1,59 @@
-import { db, auth } from '../config/firebase';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { USER_COLLECTION } from '../models/userModel';
-import { PhoneAuthProvider } from 'firebase/auth';
-import { updateEmail } from 'firebase/auth';
+import { db, auth, storage } from '../config/firebase';
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  arrayUnion, 
+  arrayRemove,
+  serverTimestamp 
+} from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
-export const userService = {
-  // Créer un nouvel utilisateur
-  createUser: async (userData) => {
+const userService = {
+  // Créer un nouveau profil utilisateur
+  async createUserProfile(userData) {
     try {
-      const userRef = doc(db, USER_COLLECTION, auth.currentUser.uid);
-      await setDoc(userRef, {
-        ...userData,
+      const userRef = doc(db, 'users', userData.uid);
+      const userProfile = {
+        uid: userData.uid,
+        email: userData.email,
+        name: userData.name,
+        phone: userData.phone,
+        photoURL: null,
+        username: null,
+        bio: '',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
-        isVerified: false,
-        notificationsEnabled: true,
-      });
+        isOnline: true,
+        lastSeen: serverTimestamp(),
+        preferences: {
+          notifications: true,
+          language: 'fr',
+          theme: 'dark'
+        },
+        following: [],
+        followers: [],
+        eventsAttending: [],
+        eventsCreated: [],
+        socialLinks: {}
+      };
+
+      await setDoc(userRef, userProfile);
+      return userProfile;
     } catch (error) {
-      console.error('Erreur création utilisateur:', error);
+      console.error('Erreur création profil:', error);
       throw error;
     }
   },
 
-  // Obtenir les données d'un utilisateur
-  getUserData: async (userId = auth.currentUser?.uid) => {
+  // Mettre à jour le profil
+  async updateUserProfile(uid, updates) {
     try {
-      const userRef = doc(db, USER_COLLECTION, userId);
-      const userDoc = await getDoc(userRef);
-      
-      if (userDoc.exists()) {
-        return userDoc.data();
-      }
-      return null;
-    } catch (error) {
-      console.error('Erreur récupération utilisateur:', error);
-      throw error;
-    }
-  },
-
-  // Mettre à jour le profil utilisateur
-  updateUserProfile: async (updates) => {
-    try {
-      const userRef = doc(db, USER_COLLECTION, auth.currentUser.uid);
+      const userRef = doc(db, 'users', uid);
       await updateDoc(userRef, {
         ...updates,
-        updatedAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
       });
     } catch (error) {
       console.error('Erreur mise à jour profil:', error);
@@ -52,73 +61,67 @@ export const userService = {
     }
   },
 
-  // Mettre à jour la photo de profil
-  updateProfilePhoto: async (photoURL) => {
+  // Uploader une photo de profil
+  async uploadProfilePhoto(uid, photoUri) {
     try {
-      const userRef = doc(db, USER_COLLECTION, auth.currentUser.uid);
-      await updateDoc(userRef, {
-        photoURL,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error('Erreur mise à jour photo:', error);
-      throw error;
-    }
-  },
-
-  // Mettre à jour les préférences de notification
-  updateNotificationPreferences: async (enabled) => {
-    try {
-      const userRef = doc(db, USER_COLLECTION, auth.currentUser.uid);
-      await updateDoc(userRef, {
-        notificationsEnabled: enabled,
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error('Erreur mise à jour notifications:', error);
-      throw error;
-    }
-  },
-
-  // Vérification du numéro de téléphone
-  verifyPhoneNumber: async (phoneNumber) => {
-    try {
-      const provider = new PhoneAuthProvider(auth);
-      const verificationId = await provider.verifyPhoneNumber(phoneNumber);
-      return verificationId;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Mise à jour des informations de profil complètes
-  updateFullProfile: async (userData) => {
-    try {
-      const userRef = doc(db, USER_COLLECTION, auth.currentUser.uid);
-      await updateDoc(userRef, {
-        ...userData,
-        updatedAt: serverTimestamp(),
-      });
+      const response = await fetch(photoUri);
+      const blob = await response.blob();
+      const photoRef = ref(storage, `users/${uid}/profile.jpg`);
       
-      // Si l'email a changé
-      if (userData.email !== auth.currentUser.email) {
-        await updateEmail(auth.currentUser, userData.email);
+      await uploadBytes(photoRef, blob);
+      const photoURL = await getDownloadURL(photoRef);
+      
+      await this.updateUserProfile(uid, { photoURL });
+      return photoURL;
+    } catch (error) {
+      console.error('Erreur upload photo:', error);
+      throw error;
+    }
+  },
+
+  // Suivre/Ne plus suivre un utilisateur
+  async toggleFollow(currentUserId, targetUserId) {
+    try {
+      const currentUserRef = doc(db, 'users', currentUserId);
+      const targetUserRef = doc(db, 'users', targetUserId);
+      
+      const currentUserDoc = await getDoc(currentUserRef);
+      const isFollowing = currentUserDoc.data().following.includes(targetUserId);
+
+      if (isFollowing) {
+        await updateDoc(currentUserRef, {
+          following: arrayRemove(targetUserId)
+        });
+        await updateDoc(targetUserRef, {
+          followers: arrayRemove(currentUserId)
+        });
+      } else {
+        await updateDoc(currentUserRef, {
+          following: arrayUnion(targetUserId)
+        });
+        await updateDoc(targetUserRef, {
+          followers: arrayUnion(currentUserId)
+        });
       }
     } catch (error) {
+      console.error('Erreur toggle follow:', error);
       throw error;
     }
   },
 
-  // Gestion des préférences utilisateur
-  updateUserPreferences: async (preferences) => {
+  // Mettre à jour le statut en ligne
+  async updateOnlineStatus(uid, isOnline) {
     try {
-      const userRef = doc(db, USER_COLLECTION, auth.currentUser.uid);
+      const userRef = doc(db, 'users', uid);
       await updateDoc(userRef, {
-        preferences,
-        updatedAt: serverTimestamp()
+        isOnline,
+        lastSeen: serverTimestamp()
       });
     } catch (error) {
+      console.error('Erreur mise à jour statut:', error);
       throw error;
     }
   }
-}; 
+};
+
+export default userService; 

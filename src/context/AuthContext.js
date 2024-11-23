@@ -1,57 +1,32 @@
-import { createContext, useState, useEffect } from 'react';
-import { auth, db } from '../config/firebase';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  sendEmailVerification 
-} from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import React, { createContext, useEffect, useState } from 'react';
+import { auth } from '../config/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, onAuthStateChanged, getAuth } from 'firebase/auth';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
-        // Charger les données utilisateur depuis Firestore
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            setUserData(userDoc.data());
-          }
-        } catch (error) {
-          console.error('Erreur chargement données utilisateur:', error);
-        }
       } else {
         setUser(null);
-        setUserData(null);
       }
       setLoading(false);
     });
 
-    return unsubscribe;
+    return () => unsubscribe();
   }, []);
 
-  const signUp = async (email, password, name, phone) => {
+  const signUp = async (email, password) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        name,
-        email,
-        phone: phone || '',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
-
-      return userCredential.user;
+      const currentUser = getAuth().currentUser;
+      await sendEmailVerification(currentUser);
+      return userCredential;
     } catch (error) {
       console.error('Erreur inscription:', error);
       throw error;
@@ -61,11 +36,10 @@ export const AuthProvider = ({ children }) => {
   const signIn = async (email, password) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
-      if (userDoc.exists()) {
-        setUserData(userDoc.data());
+      if (!userCredential.user.emailVerified) {
+        throw new Error('Email non vérifié');
       }
-      return userCredential.user;
+      return userCredential;
     } catch (error) {
       console.error('Erreur connexion:', error);
       throw error;
@@ -74,19 +48,20 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
-      await firebaseSignOut(auth);
-      setUser(null);
-      setUserData(null);
+      const uid = auth.currentUser?.uid;
+      if (uid) {
+        await userService.updateOnlineStatus(uid, false);
+      }
+      await auth.signOut();
     } catch (error) {
       console.error('Erreur déconnexion:', error);
-      throw new Error('Erreur lors de la déconnexion');
+      throw error;
     }
   };
 
   return (
     <AuthContext.Provider value={{
       user,
-      userData,
       loading,
       signIn,
       signUp,

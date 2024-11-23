@@ -16,7 +16,7 @@ import { AuthContext } from '../../context/AuthContext';
 import CustomToast from '../../components/CustomToast';
 
 const LoginScreen = ({ navigation }) => {
-  const { signIn, signInWithGoogle, signInWithFacebook } = useContext(AuthContext);
+  const { signIn } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -49,24 +49,25 @@ const LoginScreen = ({ navigation }) => {
     try {
       setLoading(true);
       await signIn(email, password);
-      showToast('Connexion réussie !', 'success');
-      setTimeout(() => {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Home' }],
-        });
-      }, 1000);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Home' }],
+      });
     } catch (error) {
-      const errorMessage = 
-        error.code === 'auth/user-not-found' 
-          ? 'Aucun compte trouvé avec cet email'
-          : error.code === 'auth/wrong-password'
-          ? 'Mot de passe incorrect'
-          : error.code === 'auth/invalid-email'
-          ? 'Veuillez entrer un email valide'
-          : 'Une erreur est survenue';
-      
-      showToast(errorMessage);
+      if (error.message === 'Email non vérifié') {
+        navigation.navigate('Verification', { email });
+      } else {
+        const errorMessage =
+          error.code === 'auth/user-not-found'
+            ? 'Aucun compte trouvé avec cet email'
+            : error.code === 'auth/wrong-password'
+            ? 'Mot de passe incorrect'
+            : error.code === 'auth/invalid-email'
+            ? 'Veuillez entrer un email valide'
+            : 'Une erreur est survenue';
+        
+        showToast(errorMessage);
+      }
     } finally {
       setLoading(false);
     }

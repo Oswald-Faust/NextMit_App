@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from '../../context/AuthContext';
 import PhoneInput from '../../components/PhoneInput';
 import CustomToast from '../../components/CustomToast';
+import userService from '../../services/userService';
 
 const RegisterScreen = ({ navigation }) => {
   const { signUp } = useContext(AuthContext);
@@ -65,7 +66,15 @@ const RegisterScreen = ({ navigation }) => {
 
     try {
       setLoading(true);
-      await signUp(formData.email, formData.password, formData.name, formData.phone);
+      const userCredential = await signUp(formData.email, formData.password);
+      const userData = {
+        uid: userCredential.user.uid,
+        email: formData.email,
+        name: formData.name,
+        phone: formData.phone,
+      };
+      await userService.createUserProfile(userData);
+      
       showToast('Inscription réussie !', 'success');
       setTimeout(() => {
         navigation.reset({
