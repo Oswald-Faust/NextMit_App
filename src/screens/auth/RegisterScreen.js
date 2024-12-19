@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -13,27 +13,28 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { AuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import PhoneInput from '../../components/PhoneInput';
 import CustomToast from '../../components/CustomToast';
-import userService from '../../services/userService';
+import VerificationPopup from '../../components/VerificationPopup';
 
 const RegisterScreen = ({ navigation }) => {
-  const { signUp } = useContext(AuthContext);
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
     password: '',
     confirmPassword: ''
   });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({
     visible: false,
     message: '',
     type: 'error'
   });
+  const [showVerificationPopup, setShowVerificationPopup] = useState(false);
 
   const showToast = (message, type = 'error') => {
     setToast({
@@ -44,7 +45,7 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   const handleRegister = async () => {
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword) {
       showToast('Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -66,34 +67,55 @@ const RegisterScreen = ({ navigation }) => {
 
     try {
       setLoading(true);
-      const userCredential = await signUp(formData.email, formData.password);
-      const userData = {
-        uid: userCredential.user.uid,
+      console.log('Tentative d\'inscription avec:', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
-        name: formData.name,
-        phone: formData.phone,
-      };
-      await userService.createUserProfile(userData);
+        phone: formData.phone
+      });
+
+      await signUp({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password,
+        phone: formData.phone.trim(),
+      });
       
-      showToast('Inscription réussie !', 'success');
-      setTimeout(() => {
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Home' }],
-        });
-      }, 1000);
+      console.log('Inscription réussie');
+      setShowVerificationPopup(true);
     } catch (error) {
-      const errorMessage = 
-        error.code === 'auth/email-already-in-use'
-          ? 'Cet email est déjà utilisé'
-          : error.code === 'auth/invalid-email'
-          ? 'Format d\'email invalide'
-          : 'Une erreur est survenue lors de l\'inscription';
+      console.error('Erreur d\'inscription:', error);
+      console.error('Response data:', error.response?.data);
+      console.error('Status code:', error.response?.status);
+      
+      let errorMessage = 'Une erreur est survenue lors de l\'inscription';
+      
+      if (error.response) {
+        switch (error.response.status) {
+          case 409:
+            errorMessage = 'Cet email est déjà utilisé';
+            break;
+          case 400:
+            errorMessage = error.response.data?.message || 'Données invalides';
+            break;
+          default:
+            errorMessage = error.response.data?.message || errorMessage;
+        }
+      }
       
       showToast(errorMessage);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVerificationPopupClose = () => {
+    setShowVerificationPopup(false);
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'Home' }],
+    });
   };
 
   return (
@@ -131,8 +153,8 @@ const RegisterScreen = ({ navigation }) => {
           style={styles.input}
           placeholder="Nom complet"
           placeholderTextColor="#666"
-          value={formData.name}
-          onChangeText={(text) => setFormData({ ...formData, name: text })}
+          value={formData.firstName}
+          onChangeText={(text) => setFormData({ ...formData, firstName: text })}
         />
 
         <TextInput
@@ -201,6 +223,12 @@ const RegisterScreen = ({ navigation }) => {
           <Text style={styles.loginText}>Déjà un compte? Se connecter</Text>
         </TouchableOpacity>
       </ScrollView>
+      {showVerificationPopup && (
+        <VerificationPopup 
+          email={formData.email} 
+          onVerify={handleVerificationPopupClose} 
+        />
+      )}
     </SafeAreaView>
   );
 };

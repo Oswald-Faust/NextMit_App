@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -12,11 +12,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, FONTS } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-import { AuthContext } from '../../context/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 import CustomToast from '../../components/CustomToast';
 
 const LoginScreen = ({ navigation }) => {
-  const { signIn } = useContext(AuthContext);
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -48,26 +48,42 @@ const LoginScreen = ({ navigation }) => {
 
     try {
       setLoading(true);
-      await signIn(email, password);
+      console.log('Tentative de connexion avec:', { email });
+      
+      await signIn({ 
+        email: email.toLowerCase().trim(),
+        password 
+      });
+      
+      console.log('Connexion réussie');
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
       });
     } catch (error) {
-      if (error.message === 'Email non vérifié') {
-        navigation.navigate('Verification', { email });
-      } else {
-        const errorMessage =
-          error.code === 'auth/user-not-found'
-            ? 'Aucun compte trouvé avec cet email'
-            : error.code === 'auth/wrong-password'
-            ? 'Mot de passe incorrect'
-            : error.code === 'auth/invalid-email'
-            ? 'Veuillez entrer un email valide'
-            : 'Une erreur est survenue';
-        
-        showToast(errorMessage);
+      console.error('Erreur de connexion:', error);
+      console.error('Response data:', error.response?.data);
+      console.error('Status code:', error.response?.status);
+      
+      let errorMessage = 'Une erreur est survenue';
+      
+      if (error.response) {
+        switch (error.response.status) {
+          case 401:
+            errorMessage = 'Email ou mot de passe incorrect';
+            break;
+          case 403:
+            errorMessage = 'Compte non vérifié. Veuillez vérifier votre email';
+            break;
+          case 404:
+            errorMessage = 'Aucun compte trouvé avec cet email';
+            break;
+          default:
+            errorMessage = error.response.data?.message || errorMessage;
+        }
       }
+      
+      showToast(errorMessage);
     } finally {
       setLoading(false);
     }

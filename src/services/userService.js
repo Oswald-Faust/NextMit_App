@@ -47,6 +47,23 @@ const userService = {
     }
   },
 
+  // Récupérer le profil utilisateur
+  async getUserProfile(uid) {
+    try {
+      const userRef = doc(db, 'users', uid);
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        throw new Error('Profil utilisateur non trouvé');
+      }
+      
+      return userDoc.data();
+    } catch (error) {
+      console.error('Erreur récupération profil:', error);
+      throw error;
+    }
+  },
+
   // Mettre à jour le profil
   async updateUserProfile(uid, updates) {
     try {
