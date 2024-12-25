@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, TouchableOpacity, Text } from 'react-native';
+import { View, TouchableOpacity, Text, SafeAreaView } from 'react-native';
 import { ProtectedButton } from '../components/ProtectedButton';
 import { useProtectedNavigation } from '../hooks/useProtectedNavigation';
+import BottomNav from '../components/BottomNav';
 
 const EventScreen = () => {
   const { navigateWithAuth } = useProtectedNavigation();
@@ -11,7 +12,7 @@ const EventScreen = () => {
   };
 
   return (
-    <View>
+    <SafeAreaView style={styles.container}>
       <ProtectedButton onAction={handleParticipate}>
         <Text>Participer à l'événement</Text>
       </ProtectedButton>
@@ -21,7 +22,12 @@ const EventScreen = () => {
       >
         <Text>Voir les commentaires</Text>
       </TouchableOpacity>
-    </View>
+
+      <BottomNav 
+        handleNavigation={navigateWithAuth}
+        currentScreen="Events"
+      />
+    </SafeAreaView>
   );
 };
 

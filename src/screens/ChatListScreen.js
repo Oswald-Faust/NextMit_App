@@ -10,8 +10,12 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { useProtectedNavigation } from '../hooks/useProtectedNavigation';
+import BottomNav from '../components/BottomNav';
 
 const Chat = ({ navigation }) => {
+  const { navigateWithAuth } = useProtectedNavigation();
+  
   const conversations = [
     {
       id: '1',
@@ -134,23 +138,10 @@ const Chat = ({ navigation }) => {
         ))}
       </ScrollView>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.bottomNavItem}>
-          <Ionicons name="home-outline" size={24} color="#9ACD32" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem}>
-          <Ionicons name="notifications-outline" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem}>
-          <Ionicons name="gift-outline" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem}>
-          <Ionicons name="chatbubble-outline" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.bottomNavItem}>
-          <Ionicons name="person-outline" size={24} color="#666" />
-        </TouchableOpacity>
-      </View>
+      <BottomNav 
+        handleNavigation={navigateWithAuth}
+        currentScreen="Chat"
+      />
     </SafeAreaView>
   );
 };
@@ -300,16 +291,6 @@ const styles = StyleSheet.create({
   lastMessage: {
     color: '#666',
     fontSize: 14,
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#1A1A1A',
-  },
-  bottomNavItem: {
-    padding: 8,
   },
 });
 

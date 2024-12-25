@@ -14,10 +14,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { FONTS, COLORS } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useProtectedNavigation } from '../hooks/useProtectedNavigation';
+import BottomNav from '../components/BottomNav';
 
 const { width, height } = Dimensions.get('window');
 
 const NotificationsScreen = ({ navigation }) => {
+  const { navigateWithAuth } = useProtectedNavigation();
   const [selectedNotification, setSelectedNotification] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const slideAnim = new Animated.Value(height);
@@ -152,6 +155,10 @@ const NotificationsScreen = ({ navigation }) => {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
       {renderNotificationModal()}
+      <BottomNav 
+        handleNavigation={navigateWithAuth}
+        currentScreen="Notifications"
+      />
     </SafeAreaView>
   );
 };

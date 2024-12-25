@@ -10,8 +10,11 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useProtectedNavigation } from '../hooks/useProtectedNavigation';
+import BottomNav from '../components/BottomNav';
 
 const DishDetails = ({ navigation }) => {
+  const { navigateWithAuth } = useProtectedNavigation();
   const [quantity, setQuantity] = useState(1);
 
   const dish = {
@@ -73,6 +76,10 @@ const DishDetails = ({ navigation }) => {
           <Text style={styles.addToCartText}>Ajouter au panier</Text>
         </TouchableOpacity>
       </View>
+      <BottomNav 
+        handleNavigation={navigateWithAuth}
+        currentScreen="Home"
+      />
     </SafeAreaView>
   );
 };

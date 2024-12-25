@@ -12,10 +12,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useProtectedNavigation } from '../hooks/useProtectedNavigation';
+import BottomNav from '../components/BottomNav';
 
 const { width } = Dimensions.get('window');
 
 const RestaurantDetails = ({ navigation }) => {
+  const { navigateWithAuth } = useProtectedNavigation();
+
   const restaurant = {
     name: 'Makoumba',
     element: 'Element eau',
@@ -130,23 +134,10 @@ const RestaurantDetails = ({ navigation }) => {
         </View>
       </ScrollView>
 
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="home-outline" size={24} color="#9ACD32" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="notifications-outline" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="gift-outline" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="chatbubble-outline" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="person-outline" size={24} color="#666" />
-        </TouchableOpacity>
-      </View>
+      <BottomNav 
+        handleNavigation={navigateWithAuth}
+        currentScreen="Home"
+      />
     </SafeAreaView>
   );
 };

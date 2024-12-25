@@ -11,8 +11,11 @@ import {
   TextInput,
 } from 'react-native';
 import { Ionicons, Feather, MaterialIcons } from '@expo/vector-icons';
+import BottomNav from '../components/BottomNav';
+import { useProtectedNavigation } from '../hooks/useProtectedNavigation';
 
 const ProfileScreen = ({ navigation }) => {
+  const { navigateWithAuth } = useProtectedNavigation();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
@@ -273,6 +276,10 @@ const ProfileScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      <BottomNav 
+        handleNavigation={navigateWithAuth}
+        currentScreen="Profile"
+      />
     </SafeAreaView>
   );
 };

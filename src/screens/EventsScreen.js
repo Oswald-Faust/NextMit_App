@@ -11,10 +11,14 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useProtectedNavigation } from '../hooks/useProtectedNavigation';
+import BottomNav from '../components/BottomNav';
 
 const { width } = Dimensions.get('window');
 
 const EventsScreen = ({ navigation }) => {
+  const { navigateWithAuth } = useProtectedNavigation();
+
   const elements = [
     { id: 'eau', name: 'Eau', icon: require('../assets/icons/eau.png') },
     { id: 'terre', name: 'Terre', icon: require('../assets/icons/terre.png') },
@@ -122,26 +126,10 @@ const EventsScreen = ({ navigation }) => {
         </View>
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity style={styles.navItem}
-      //  onPress={() => navigation.navigate('RestaurantDetails')}
-        >
-          <Ionicons name="home" size={24} color="#9ACD32" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="notifications-outline" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="gift-outline" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="chatbubble-outline" size={24} color="#666" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <Ionicons name="person-outline" size={24} color="#666" />
-        </TouchableOpacity>
-      </View>
+      <BottomNav 
+        handleNavigation={navigateWithAuth}
+        currentScreen="Events"
+      />
     </SafeAreaView>
   );
 };

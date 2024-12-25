@@ -10,8 +10,11 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
+import BottomNav from '../components/BottomNav';
+import { useProtectedNavigation } from '../hooks/useProtectedNavigation';
 
 const ChatDetail = ({ navigation, route }) => {
+  const { navigateWithAuth } = useProtectedNavigation();
   const [message, setMessage] = useState('');
   
   const participants = [
@@ -159,6 +162,10 @@ const ChatDetail = ({ navigation, route }) => {
           <Feather name="camera" size={20} color="#fff" />
         </TouchableOpacity>
       </View>
+      <BottomNav 
+        handleNavigation={navigateWithAuth}
+        currentScreen="Chat"
+      />
     </SafeAreaView>
   );
 };

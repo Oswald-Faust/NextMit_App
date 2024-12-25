@@ -5,6 +5,7 @@ import { FONTS, COLORS } from '../constants/theme';
 import { AuthContext } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { Video } from 'expo-av';
+import BottomNav from '../components/BottomNav';
 import { useProtectedNavigation } from '../hooks/useProtectedNavigation';
 
 const BackgroundVideo = () => {
@@ -108,35 +109,7 @@ const HomeScreen = ({ navigation }) => {
         </View>
 
         {/* Navigation du bas */}
-        <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem}>
-            <Ionicons name="home" size={24} color={COLORS.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.navItem}
-            onPress={() => handleNavigation('Events')}
-          >
-            <Ionicons name="pricetag-outline" size={24} color="#666" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => handleNavigation('Notifications')}
-          >
-            <Ionicons name="notifications-outline" size={24} color="#666" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => handleNavigation('Chat')}
-          >
-            <Ionicons name="chatbubble-outline" size={24} color="#666" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.navItem}
-            onPress={() => handleNavigation('Profile')}
-          >
-            <Ionicons name="person-outline" size={24} color="#666" />
-          </TouchableOpacity>
-        </View>
+        <BottomNav handleNavigation={handleNavigation} />
       </SafeAreaView>
     </View>
   );
