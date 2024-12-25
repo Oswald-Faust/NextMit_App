@@ -112,7 +112,7 @@ const HomeScreen = ({ navigation }) => {
           <TouchableOpacity style={styles.navItem}>
             <Ionicons name="home" size={24} color={COLORS.primary} />
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.navItem}
             onPress={() => handleNavigation('Events')}
           >

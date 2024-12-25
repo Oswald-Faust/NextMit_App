@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
   TextInput,
   Image,
   ScrollView,
@@ -15,8 +15,12 @@ import { COLORS, FONTS } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import PhoneInput from '../../components/PhoneInput';
-import CustomToast from '../../components/CustomToast';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import VerificationPopup from '../../components/VerificationPopup';
+import CustomToast from '../../components/CustomToast';
+
+const API_URL = 'http://10.0.2.2:5000'; // Pour Android Emulator
+// const API_URL = 'http://localhost:5000'; // Pour iOS Simulator
 
 const RegisterScreen = ({ navigation }) => {
   const { signUp } = useAuth();
@@ -45,7 +49,11 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   const handleRegister = async () => {
+    console.log('Début de la tentative d\'inscription');
+    console.log('Données du formulaire:', formData);
+
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword) {
+      console.log('Champs manquants');
       showToast('Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -67,44 +75,46 @@ const RegisterScreen = ({ navigation }) => {
 
     try {
       setLoading(true);
-      console.log('Tentative d\'inscription avec:', {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone
-      });
-
-      await signUp({
+      console.log('Envoi de la requête à:', `${API_URL}/auth/register`);
+      const requestBody = {
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password.trim(),
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
-        email: formData.email.toLowerCase().trim(),
-        password: formData.password,
         phone: formData.phone.trim(),
-      });
+      };
       
-      console.log('Inscription réussie');
+      console.log('Données envoyées:', requestBody);
+
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      console.log('Statut de la réponse:', response.status);
+      const data = await response.json();
+      console.log('Données reçues:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur lors de l\'inscription');
+      }
+
+      // Stocker le token et les données utilisateur
+      await AsyncStorage.setItem('userToken', data.token);
+      await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+
+      // Mettre à jour le contexte d'authentification
+      await signUp(data.token);
+
+      // Afficher le popup de vérification si nécessaire
       setShowVerificationPopup(true);
     } catch (error) {
       console.error('Erreur d\'inscription:', error);
-      console.error('Response data:', error.response?.data);
-      console.error('Status code:', error.response?.status);
-      
-      let errorMessage = 'Une erreur est survenue lors de l\'inscription';
-      
-      if (error.response) {
-        switch (error.response.status) {
-          case 409:
-            errorMessage = 'Cet email est déjà utilisé';
-            break;
-          case 400:
-            errorMessage = error.response.data?.message || 'Données invalides';
-            break;
-          default:
-            errorMessage = error.response.data?.message || errorMessage;
-        }
-      }
-      
-      showToast(errorMessage);
+      showToast(error.message || 'Une erreur est survenue');
     } finally {
       setLoading(false);
     }
@@ -149,13 +159,22 @@ const RegisterScreen = ({ navigation }) => {
 
         <Text style={styles.orText}>Or</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Nom complet"
-          placeholderTextColor="#666"
-          value={formData.firstName}
-          onChangeText={(text) => setFormData({ ...formData, firstName: text })}
-        />
+        <View style={styles.nameContainer}>
+          <TextInput
+            style={[styles.input, { width: '48%' }]}
+            placeholder="Prénom"
+            placeholderTextColor="#666"
+            value={formData.firstName}
+            onChangeText={(text) => setFormData({ ...formData, firstName: text })}
+          />
+          <TextInput
+            style={[styles.input, { width: '48%' }]}
+            placeholder="Nom"
+            placeholderTextColor="#666"
+            value={formData.lastName}
+            onChangeText={(text) => setFormData({ ...formData, lastName: text })}
+          />
+        </View>
 
         <TextInput
           style={styles.input}
@@ -227,6 +246,13 @@ const RegisterScreen = ({ navigation }) => {
         <VerificationPopup 
           email={formData.email} 
           onVerify={handleVerificationPopupClose} 
+        />
+      )}
+      {toast.visible && (
+        <CustomToast
+          message={toast.message}
+          type={toast.type}
+          onHide={() => setToast({ ...toast, visible: false })}
         />
       )}
     </SafeAreaView>
@@ -353,6 +379,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 25,
+  },
+  popupOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  popupContent: {
+    backgroundColor: COLORS.primary,
+    padding: 20,
+    borderRadius: 15,
+    width: '80%',
+    alignItems: 'center',
+  },
+  nameContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 15,
   },
 });
 

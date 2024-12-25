@@ -1,18 +1,18 @@
-import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../contexts/AuthContext';
 
 export const useProtectedNavigation = () => {
-  const { user } = useContext(AuthContext);
   const navigation = useNavigation();
+  const { isAuthenticated } = useAuth();
 
-  const navigateWithAuth = (routeName, params) => {
-    if (!user) {
-      navigation.navigate('Login');
-      return false;
+  const publicScreens = ['Events', 'CategoryDetails', 'DishDetails', 'RestaurantDetails', 'Notifications', 'Profile', 'Chat'];
+
+  const navigateWithAuth = (routeName, params = {}) => {
+    if (publicScreens.includes(routeName) || isAuthenticated) {
+      navigation.navigate(routeName, params);
+    } else {
+     navigation.navigate('Login');
     }
-    navigation.navigate(routeName, params);
-    return true;
   };
 
   return { navigateWithAuth };

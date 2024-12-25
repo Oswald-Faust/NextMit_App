@@ -4,6 +4,7 @@ import * as ExpoSplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
 import { AuthProvider } from './context/AuthContext';
 import AppNavigator from './navigation/AppNavigator';
+import { NavigationContainer } from '@react-navigation/native';
 
 const Stack = createStackNavigator();
 
@@ -26,7 +27,7 @@ export default function App() {
 
   return (
     <AuthProvider>
-          <AppNavigator />
+        <AppNavigator />
     </AuthProvider>
   );
 } 

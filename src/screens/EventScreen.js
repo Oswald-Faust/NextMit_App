@@ -16,7 +16,7 @@ const EventScreen = () => {
         <Text>Participer à l'événement</Text>
       </ProtectedButton>
 
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={() => navigateWithAuth('Comments')}
       >
         <Text>Voir les commentaires</Text>

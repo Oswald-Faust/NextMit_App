@@ -14,6 +14,11 @@ import { COLORS, FONTS } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import CustomToast from '../../components/CustomToast';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+
+const API_URL = 'http://10.0.2.2:5000'; // Pour Android Emulator
+// const API_URL = 'http://localhost:5000'; // Pour iOS Simulator
 
 const LoginScreen = ({ navigation }) => {
   const { signIn } = useAuth();
@@ -26,6 +31,7 @@ const LoginScreen = ({ navigation }) => {
     type: 'error'
   });
   const [loading, setLoading] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const showToast = (message, type = 'error') => {
     setToast({
@@ -36,54 +42,67 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      showToast('Veuillez remplir tous les champs');
-      return;
-    }
+    console.log('Début de la tentative de connexion');
+    console.log('Email:', email);
+    console.log('URL API:', API_URL);
 
-    if (!email.includes('@')) {
-      showToast('Veuillez entrer un email valide');
+    if (!email || !password) {
+      console.log('Champs manquants');
+      showToast('Veuillez remplir tous les champs');
       return;
     }
 
     try {
       setLoading(true);
-      console.log('Tentative de connexion avec:', { email });
+      console.log('Envoi de la requête à:', `${API_URL}/api/v1/auth/login`);
       
-      await signIn({ 
-        email: email.toLowerCase().trim(),
-        password 
+      // Vérifier la connectivité réseau
+      const netInfo = await NetInfo.fetch();
+      console.log('État du réseau:', netInfo.type, netInfo.isConnected);
+
+      if (!netInfo.isConnected) {
+        throw new Error('Pas de connexion Internet');
+      }
+
+      const response = await fetch(`${API_URL}/api/v1/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password: password.trim()
+        })
       });
-      
-      console.log('Connexion réussie');
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Home' }],
-      });
+
+      console.log('Réponse reçue:', response.status);
+      const data = await response.json();
+      console.log('Données reçues:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur de connexion');
+      }
+
+      // Stocker le token et les données utilisateur
+      await AsyncStorage.setItem('userToken', data.token);
+      await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+
+      // Mettre à jour le contexte d'authentification
+      await signIn(data.token);
+
+      // Rediriger vers l'écran principal
+      setShowSuccessPopup(true);
+      setTimeout(() => {
+        setShowSuccessPopup(false);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MainApp' }],
+        });
+      }, 2000);
     } catch (error) {
       console.error('Erreur de connexion:', error);
-      console.error('Response data:', error.response?.data);
-      console.error('Status code:', error.response?.status);
-      
-      let errorMessage = 'Une erreur est survenue';
-      
-      if (error.response) {
-        switch (error.response.status) {
-          case 401:
-            errorMessage = 'Email ou mot de passe incorrect';
-            break;
-          case 403:
-            errorMessage = 'Compte non vérifié. Veuillez vérifier votre email';
-            break;
-          case 404:
-            errorMessage = 'Aucun compte trouvé avec cet email';
-            break;
-          default:
-            errorMessage = error.response.data?.message || errorMessage;
-        }
-      }
-      
-      showToast(errorMessage);
+      showToast(error.message || 'Une erreur est survenue lors de la connexion');
     } finally {
       setLoading(false);
     }
@@ -309,6 +328,50 @@ const styles = StyleSheet.create({
     borderColor: '#FF453A',
     backgroundColor: 'rgba(255, 69, 58, 0.1)',
   },
+  // Styles pour les animations
+  animatedContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  fadeIn: {
+    opacity: 1,
+    transform: [{ translateY: 0 }],
+  },
+  fadeOut: {
+    opacity: 0,
+    transform: [{ translateY: 20 }],
+  },
+  popupOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  popupContent: {
+    width: '80%',
+    backgroundColor: COLORS.primary,
+    borderRadius: 15,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  successAnimation: {
+    width: 100,
+    height: 100,
+    marginBottom: 20,
+  }
 });
 
 export default LoginScreen; 

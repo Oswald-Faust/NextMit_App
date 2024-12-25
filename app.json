@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "EventChat",
+    "displayName": "EventChat",
     "slug": "EventChat",
     "version": "1.0.0",
     "orientation": "portrait",
