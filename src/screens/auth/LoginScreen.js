@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   TextInput,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,8 +18,15 @@ import CustomToast from '../../components/CustomToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 
-const API_URL = 'http://10.0.2.2:5000'; // Pour Android Emulator
-// const API_URL = 'http://localhost:5000'; // Pour iOS Simulator
+const API_URL = Platform.select({
+  android: __DEV__ 
+    ? 'http://192.168.8.197:5000/api/v1'  // Votre IP Wi-Fi
+    : 'http://localhost:5000/api/v1',
+  ios: __DEV__
+    ? 'http://192.168.8.197:5000/api/v1'  // Même IP
+    : 'http://localhost:5000/api/v1',
+  default: 'http://localhost:5000/api/v1'
+});
 
 const LoginScreen = ({ navigation }) => {
   const { signIn } = useAuth();
@@ -54,17 +62,15 @@ const LoginScreen = ({ navigation }) => {
 
     try {
       setLoading(true);
-      console.log('Envoi de la requête à:', `${API_URL}/api/v1/auth/login`);
-
+      
       // Vérifier la connectivité réseau
       const netInfo = await NetInfo.fetch();
-      console.log('État du réseau:', netInfo.type, netInfo.isConnected);
-
       if (!netInfo.isConnected) {
         throw new Error('Pas de connexion Internet');
       }
 
-      const response = await fetch(`${API_URL}/api/v1/auth/login`, {
+      console.log('Envoi de la requête à:', `${API_URL}/auth/login`);
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,30 +82,31 @@ const LoginScreen = ({ navigation }) => {
         })
       });
 
-      console.log('Réponse reçue:', response.status);
       const data = await response.json();
+      console.log('Réponse reçue:', response.status);
       console.log('Données reçues:', data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Erreur de connexion');
       }
 
-      // Stocker le token et les données utilisateur
-      await AsyncStorage.setItem('userToken', data.token);
-      await AsyncStorage.setItem('userData', JSON.stringify(data.user));
-
-      // Mettre à jour le contexte d'authentification
-      await signIn(data.token);
-
-      // Rediriger vers l'écran principal
-      setShowSuccessPopup(true);
-      setTimeout(() => {
-        setShowSuccessPopup(false);
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainApp' }],
-        });
-      }, 2000);
+      try {
+        await AsyncStorage.setItem('userToken', data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        await signIn(data.token);
+        
+        setShowSuccessPopup(true);
+        setTimeout(() => {
+          setShowSuccessPopup(false);
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Home' }],
+          });
+        }, 2000);
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour du contexte:', error);
+        showToast('Connexion réussie mais erreur de session');
+      }
     } catch (error) {
       console.error('Erreur de connexion:', error);
       showToast(error.message || 'Une erreur est survenue lors de la connexion');
