@@ -7,7 +7,8 @@ import {
   TextInput,
   Image,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,11 +20,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import VerificationPopup from '../../components/VerificationPopup';
 import CustomToast from '../../components/CustomToast';
 
-const API_URL = 'http://10.0.2.2:5000'; // Pour Android Emulator
-// const API_URL = 'http://localhost:5000'; // Pour iOS Simulator
+const API_URL = Platform.select({
+  android: __DEV__ 
+    ? 'http://192.168.8.197:5000/api/v1'  // Votre IP Wi-Fi
+    : 'http://localhost:5000/api/v1',
+  ios: __DEV__
+    ? 'http://192.168.8.197:5000/api/v1'  // Même IP
+    : 'http://localhost:5000/api/v1',
+  default: 'http://localhost:5000/api/v1'
+});
 
 const RegisterScreen = ({ navigation }) => {
   const { signUp } = useAuth();
+  console.log('signUp function:', signUp);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -53,7 +62,6 @@ const RegisterScreen = ({ navigation }) => {
     console.log('Données du formulaire:', formData);
 
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword) {
-      console.log('Champs manquants');
       showToast('Veuillez remplir tous les champs obligatoires');
       return;
     }
@@ -83,7 +91,7 @@ const RegisterScreen = ({ navigation }) => {
         lastName: formData.lastName.trim(),
         phone: formData.phone.trim(),
       };
-      
+
       console.log('Données envoyées:', requestBody);
 
       const response = await fetch(`${API_URL}/auth/register`, {
@@ -103,15 +111,20 @@ const RegisterScreen = ({ navigation }) => {
         throw new Error(data.message || 'Erreur lors de l\'inscription');
       }
 
-      // Stocker le token et les données utilisateur
-      await AsyncStorage.setItem('userToken', data.token);
-      await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+      try {
+        // Stocker le token et les données utilisateur
+        await AsyncStorage.setItem('userToken', data.token);
+        await AsyncStorage.setItem('userData', JSON.stringify(data.user));
 
-      // Mettre à jour le contexte d'authentification
-      await signUp(data.token);
+        // Mettre à jour le contexte d'authentification
+        await signUp(data.token);
 
-      // Afficher le popup de vérification si nécessaire
-      setShowVerificationPopup(true);
+        // Afficher le popup de vérification
+        setShowVerificationPopup(true);
+      } catch (error) {
+        console.error('Erreur lors de la mise à jour du contexte:', error);
+        showToast('Inscription réussie mais erreur de connexion');
+      }
     } catch (error) {
       console.error('Erreur d\'inscription:', error);
       showToast(error.message || 'Une erreur est survenue');

@@ -55,7 +55,7 @@ const LoginScreen = ({ navigation }) => {
     try {
       setLoading(true);
       console.log('Envoi de la requête à:', `${API_URL}/api/v1/auth/login`);
-      
+
       // Vérifier la connectivité réseau
       const netInfo = await NetInfo.fetch();
       console.log('État du réseau:', netInfo.type, netInfo.isConnected);

@@ -1,25 +1,25 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '@env';
 
-const DEFAULT_API_URL = 'http://192.168.1.X:3000/api/v1';
+const API_URL = __DEV__ 
+  ? 'http://10.0.2.2:5000/api/v1'  // Android Emulator
+  : 'http://localhost:5000/api/v1'; // Production
 
-class ApiService {
-  private api = axios.create({
-    baseURL: API_URL || DEFAULT_API_URL,
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    timeout: 10000
-  });
+  class ApiService {
+    private api;
 
-  constructor() {
-    if (__DEV__) {
-      console.log('API_URL:', API_URL || DEFAULT_API_URL);
+    constructor() {
+      this.api = axios.create({
+        baseURL: API_URL,
+        timeout: 15000,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        }
+      });
+  
+      this.setupInterceptors();
     }
-    
-    this.setupInterceptors();
-  }
 
   private setupInterceptors() {
     this.api.interceptors.request.use(
@@ -65,11 +65,11 @@ class ApiService {
     if (error.message === 'Network Error') {
       return new Error('Erreur de connexion au serveur. Vérifiez votre connexion internet.');
     }
-    
+
     if (error.response) {
       return new Error(error.response.data?.message || 'Une erreur est survenue');
     }
-    
+
     return error;
   }
 
@@ -85,7 +85,7 @@ class ApiService {
 
   async register(userData: any) {
     try {
-      const response = await this.api.post('/auth/register', userData);
+      const response = await this.api.post('api/v1/auth/register', userData);
       await AsyncStorage.setItem('token', response.data.token);
       return response.data;
     } catch (error) {

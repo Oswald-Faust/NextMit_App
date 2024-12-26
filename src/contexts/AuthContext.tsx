@@ -5,14 +5,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface AuthContextData {
   user: any;
   signIn: (credentials: { email: string; password: string }) => Promise<void>;
-  signUp: (userData: any) => Promise<void>;
+  signUp: (token: string) => Promise<void>;
   signOut: () => Promise<void>;
+  loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+export const AuthContext = createContext<AuthContextData>({
+  user: null,
+  signIn: async (credentials: { email: string; password: string }) => {},
+  signUp: async (userData : any) => {},
+  signOut: async () => {},
+  loading: false
+});
 
 export const AuthProvider: React.FC = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const signIn = async (credentials: { email: string; password: string }) => {
     try {
@@ -23,11 +31,12 @@ export const AuthProvider: React.FC = ({ children }) => {
     }
   };
 
-  const signUp = async (userData: any) => {
+  const signUp = async (token: string) => {
     try {
-      const response = await apiService.register(userData);
-      setUser(response.user);
+      await AsyncStorage.setItem('userToken', token);
+      setUser(JSON.parse(atob(token.split('.')[1])));
     } catch (error) {
+      console.error('Erreur lors de l\'inscription:', error);
       throw error;
     }
   };
@@ -41,8 +50,16 @@ export const AuthProvider: React.FC = ({ children }) => {
     }
   };
 
+  const value = {
+    user,
+    signIn,
+    signUp,
+    signOut,
+    loading
+  };
+
   return (
-    <AuthContext.Provider value={{ user, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
