@@ -5,7 +5,7 @@ export const useProtectedNavigation = () => {
   const navigation = useNavigation();
   const { isAuthenticated } = useAuth();
 
-  const publicScreens = ['Events', 'CategoryDetails', 'DishDetails', 'RestaurantDetails', 'Notifications', 'Profile', 'Chat'];
+  const publicScreens = [];
 
   const navigateWithAuth = (routeName, params = {}) => {
     if (publicScreens.includes(routeName) || isAuthenticated) {

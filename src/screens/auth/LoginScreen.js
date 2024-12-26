@@ -94,7 +94,7 @@ const LoginScreen = ({ navigation }) => {
         await AsyncStorage.setItem('userToken', data.token);
         await AsyncStorage.setItem('userData', JSON.stringify(data.user));
         await signIn(data.token);
-        
+
         setShowSuccessPopup(true);
         setTimeout(() => {
           setShowSuccessPopup(false);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,14 @@ import {
 import { Ionicons, Feather, MaterialIcons } from '@expo/vector-icons';
 import BottomNav from '../components/BottomNav';
 import { useProtectedNavigation } from '../hooks/useProtectedNavigation';
+import { useAuth } from '../contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileScreen = ({ navigation }) => {
   const { navigateWithAuth } = useProtectedNavigation();
+  const { user } = useAuth();
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingPhone, setIsEditingPhone] = useState(false);
@@ -26,21 +31,87 @@ const ProfileScreen = ({ navigation }) => {
   const [tempEmail, setTempEmail] = useState(email);
   const [tempPhone, setTempPhone] = useState(phone);
   const [tempDescription, setTempDescription] = useState(description);
+  const [isEditingFirstName, setIsEditingFirstName] = useState(false);
+  const [isEditingLastName, setIsEditingLastName] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [tempFirstName, setTempFirstName] = useState('');
+  const [tempLastName, setTempLastName] = useState('');
 
-  const handleSave = (type) => {
-    switch (type) {
-      case 'email':
-        setEmail(tempEmail);
-        setIsEditingEmail(false);
-        break;
-      case 'phone':
-        setPhone(tempPhone);
-        setIsEditingPhone(false);
-        break;
-      case 'description':
-        setDescription(tempDescription);
-        setIsEditingDescription(false);
-        break;
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const storedUserData = await AsyncStorage.getItem('userData');
+        if (storedUserData) {
+          const parsedData = JSON.parse(storedUserData);
+          setUserData(parsedData);
+          setEmail(parsedData.email || '');
+          setPhone(parsedData.phone || '');
+          setDescription(parsedData.bio || '');
+          setFirstName(parsedData.firstName || '');
+          setLastName(parsedData.lastName || '');
+          setTempFirstName(parsedData.firstName || '');
+          setTempLastName(parsedData.lastName || '');
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des données:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, []);
+
+  const handleSave = async (type) => {
+    try {
+      const updatedUserData = { ...userData };
+      
+      switch (type) {
+        case 'email':
+          updatedUserData.email = tempEmail;
+          setEmail(tempEmail);
+          break;
+        case 'phone':
+          updatedUserData.phone = tempPhone;
+          setPhone(tempPhone);
+          break;
+        case 'description':
+          updatedUserData.bio = tempDescription;
+          setDescription(tempDescription);
+          break;
+        case 'firstName':
+          updatedUserData.firstName = tempFirstName;
+          setFirstName(tempFirstName);
+          break;
+        case 'lastName':
+          updatedUserData.lastName = tempLastName;
+          setLastName(tempLastName);
+          break;
+      }
+
+      // Mise à jour locale
+      await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
+      setUserData(updatedUserData);
+
+      // Mise à jour sur le serveur
+      const token = await AsyncStorage.getItem('userToken');
+      const response = await fetch(`${API_URL}/users/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedUserData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la mise à jour du profil');
+      }
+
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+      handleCancel(type);
     }
   };
 
@@ -85,7 +156,9 @@ const ProfileScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.userName}>KABILTH Kabira</Text>
+          <Text style={styles.userName}>
+            {userData ? `${userData.firstName} ${userData.lastName}` : 'Chargement...'}
+          </Text>
         </View>
 
         <View style={styles.descriptionContainer}>
